@@ -1,0 +1,9 @@
+{
+    // ...
+    "name": "Seastar(Release) ready c++ dev env",
+    "build": { "dockerfile": "Dockerfile" },
+    "runArgs": [ "--cap-add=SYS_NICE", "--security-opt", "seccomp=unconfined" ],
+    "privileged": true,
+    // ...
+  }
+  
