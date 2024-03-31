@@ -25,9 +25,13 @@ find_package(Arrow REQUIRED)
 
 set(SOURCES
         main.cpp
-        public_topic/topic_definition.cpp
-        public_topic/topic_definition.h
-        public_topic/topic_structure.h)
+        topic_public/topic_definition.cpp
+        topic_public/topic_definition.h
+        topic_public/topic_structure.h
+        topic_io/topic_io.cpp
+        topic_io/topic_io.h
+        topic_debugging/topic_debugging.cpp
+        topic_debugging/topic_debugging.h)
 
 add_executable(Googom ${SOURCES})
 

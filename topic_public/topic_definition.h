@@ -13,12 +13,12 @@
 
 #include <iostream>
 
-class topic_definition {
+class TopicDefinition {
     const std::string topicName;
     const int partition;
 
-    std::vector<topic_structure> recentBuffer;
-    std::vector<topic_structure> oldestBuffer;
+    std::vector<TopicStructure> recentBuffer{};
+    std::vector<TopicStructure> oldestBuffer{};
     const std::string diskFilePath;
     const int bufferSize;
 
@@ -30,14 +30,14 @@ class topic_definition {
     // Function to handle reading record batches
     bool readRecordBatches(
       const std::shared_ptr<arrow::ipc::RecordBatchFileReader>& fileReader);
-    void writeToDisk(const topic_structure& data);
+    void writeToDisk(const TopicStructure& data);
     void printDiskData();
     static void printBuffer(
-      const std::vector<topic_structure>& buffer, const std::string& name);
+      const std::vector<TopicStructure>& buffer, const std::string& name);
 
 public:
-    topic_definition(std::string topicName, int partition, int bufferSize, std::string diskFilePath);
-    void insert(topic_structure& data);
+    TopicDefinition(std::string topicName, int partition, int bufferSize, std::string diskFilePath);
+    void insert(TopicStructure& data);
     void printAllData();
 };
 

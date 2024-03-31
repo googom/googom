@@ -18,7 +18,7 @@ namespace mp = boost::multiprecision;
 
 // Adjusted to use a string for offset to work around Apache Arrow type
 // limitations
-class topic_structure {
+class TopicStructure {
     mp::uint128_t offset;
     std::string timestamp;
     std::string keys;
@@ -37,9 +37,9 @@ class topic_structure {
     std::vector<uint8_t> value; // Representing binary data
 
 public:
-    topic_structure() {}
+    TopicStructure() {}
 
-    topic_structure(
+    TopicStructure(
       std::string timestamp,
       std::string keys,
       std::string headers,
@@ -53,23 +53,23 @@ public:
 
     const boost::multiprecision::uint128_t& getOffset() const { return offset; }
     void setOffset(const boost::multiprecision::uint128_t& offset) {
-        topic_structure::offset = offset;
+        TopicStructure::offset = offset;
     }
     const std::string& getTimestamp() const { return timestamp; }
     void setTimestamp(const std::string& timestamp) {
-        topic_structure::timestamp = timestamp;
+        TopicStructure::timestamp = timestamp;
     }
     const std::string& getKeys() const { return keys; }
-    void setKeys(const std::string& keys) { topic_structure::keys = keys; }
+    void setKeys(const std::string& keys) { TopicStructure::keys = keys; }
     const std::string& getHeaders() const { return headers; }
     void setHeaders(const std::string& headers) {
-        topic_structure::headers = headers;
+        TopicStructure::headers = headers;
     }
     int8_t getFlags() const { return flags; }
-    void setFlags(int8_t flags) { topic_structure::flags = flags; }
+    void setFlags(int8_t flags) { TopicStructure::flags = flags; }
     const std::vector<uint8_t>& getValue() const { return value; }
     void setValue(const std::vector<uint8_t>& value) {
-        topic_structure::value = value;
+        TopicStructure::value = value;
     }
 };
 

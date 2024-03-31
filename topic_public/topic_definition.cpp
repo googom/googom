@@ -6,7 +6,7 @@
 
 #include <utility>
 
-mp::uint128_t topic_definition::getAutoIncrementedOffset() {
+mp::uint128_t TopicDefinition::getAutoIncrementedOffset() {
     mp::uint128_t offset{0};
     if (recentBuffer.empty()) return offset;
     // TODO read from disk!!
@@ -15,12 +15,12 @@ mp::uint128_t topic_definition::getAutoIncrementedOffset() {
 }
 
 // Function to print error messages
-void topic_definition::printError(const std::string& message) {
+void TopicDefinition::printError(const std::string& message) {
     std::cerr << "Error: " << message << std::endl;
 }
 
 // Function to open file and handle errors
-bool topic_definition::openFile(
+bool TopicDefinition::openFile(
   const std::string& filePath, std::shared_ptr<arrow::io::ReadableFile>& file) {
     auto status = arrow::io::ReadableFile::Open(
       filePath, arrow::default_memory_pool());
@@ -35,7 +35,7 @@ bool topic_definition::openFile(
 }
 
 // Function to handle reading record batches
-bool topic_definition::readRecordBatches(
+bool TopicDefinition::readRecordBatches(
   const std::shared_ptr<arrow::ipc::RecordBatchFileReader>& fileReader) {
     bool success = true; // Keep track of success
     int i = 0;           // Counter for record batches
@@ -62,7 +62,7 @@ bool topic_definition::readRecordBatches(
     return success; // Return overall success status
 }
 
-void topic_definition::writeToDisk(const topic_structure& data) {
+void TopicDefinition::writeToDisk(const TopicStructure& data) {
     // Open file in append mode or create a new one if it doesn't exist
     auto file_result = arrow::io::FileOutputStream::Open(diskFilePath, true);
     if (!file_result.ok()) {
@@ -124,7 +124,7 @@ void topic_definition::writeToDisk(const topic_structure& data) {
     }
 }
 
-void topic_definition::printDiskData() {
+void TopicDefinition::printDiskData() {
     // Print data from the disk file
     std::cout << "Data from disk:" << std::endl;
     std::shared_ptr<arrow::io::ReadableFile> file;
@@ -150,8 +150,8 @@ void topic_definition::printDiskData() {
     std::cout << std::resetiosflags(std::ios::basefield);
 }
 
-void topic_definition::printBuffer(
-  const std::vector<topic_structure>& buffer,
+void TopicDefinition::printBuffer(
+  const std::vector<TopicStructure>& buffer,
   const std::string&
     name) { // Print data from the recentBuffer buffer (in-memory)
     std::cout << "In-memory data " << name << " :" << std::endl;
@@ -169,7 +169,7 @@ void topic_definition::printBuffer(
     std::cout << std::resetiosflags(std::ios::basefield);
 }
 
-topic_definition::topic_definition(
+TopicDefinition::TopicDefinition(
   std::string topicName,
   int partition,
   int bufferSize,
@@ -182,7 +182,7 @@ topic_definition::topic_definition(
     oldestBuffer.reserve(bufferSize);
 }
 
-void topic_definition::insert(topic_structure& data) {
+void TopicDefinition::insert(TopicStructure& data) {
     data.setOffset(getAutoIncrementedOffset());
 
     writeToDisk(data);
@@ -194,7 +194,7 @@ void topic_definition::insert(topic_structure& data) {
     }
 }
 
-void topic_definition::printAllData() {
+void TopicDefinition::printAllData() {
     printBuffer(recentBuffer, "recentBuffer");
 
     // printDiskData();
