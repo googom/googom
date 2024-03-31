@@ -1,0 +1,64 @@
+{
+  "flow": {
+    "flowName": "sample1",
+    "owner": "It is me",
+    "description": "a good pipeline",
+    "tags": [
+      {
+        "tag": "email: me@me.com"
+      },
+      {
+        "tag": "business unit: my team"
+      }
+    ],
+    "topics": [
+      {
+        "topicName": "t1",
+        "quality": "bronze",
+        "description": "why do we have this topic?",
+        "SLA": "sla",
+        "tags": [
+          {
+            "tag": "email: me@me.com"
+          },
+          {
+            "tag": "business unit: my team"
+          }
+        ],
+        "schema": [
+          {
+            "fieldName": "id",
+            "fieldType": "int"
+          },
+          {
+            "fieldName": "smallValue",
+            "fieldType": "int"
+          },
+          {
+            "fieldName": "bigValue",
+            "fieldType": "int"
+          }
+        ],
+        "schemeEnforced": true,
+        "dqRules": [
+          {
+            "fieldCannotBeEmpty": "id",
+            "fieldCannotBeGreaterThan": [
+              20,
+              "smallValue"
+            ],
+            "fieldCannotBeSmallerThan": [
+              20,
+              "bigValue"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+
+
+// masking, transformations on topic level.
+// the biggest question is how to pass the data to the next topic?
+// better dq defintion is needed
