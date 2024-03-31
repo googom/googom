@@ -23,22 +23,12 @@ class TopicDefinition {
     const int bufferSize;
 
     mp::uint128_t getAutoIncrementedOffset();
-    static void printError(const std::string& message);
-    bool openFile(
-      const std::string& filePath,
-      std::shared_ptr<arrow::io::ReadableFile>& file);
-    // Function to handle reading record batches
-    bool readRecordBatches(
-      const std::shared_ptr<arrow::ipc::RecordBatchFileReader>& fileReader);
-    void writeToDisk(const TopicStructure& data);
-    void printDiskData();
-    static void printBuffer(
-      const std::vector<TopicStructure>& buffer, const std::string& name);
+
+
 
 public:
     TopicDefinition(std::string topicName, int partition, int bufferSize, std::string diskFilePath);
     void insert(TopicStructure& data);
-    void printAllData();
 };
 
 #endif // GOOGOM_TOPIC_DEFINITION_H

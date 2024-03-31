@@ -31,7 +31,9 @@ set(SOURCES
         topic_io/topic_io.cpp
         topic_io/topic_io.h
         topic_debugging/topic_debugging.cpp
-        topic_debugging/topic_debugging.h)
+        topic_debugging/topic_debugging.h
+        utilities/print_utilities.cpp
+        utilities/print_utilities.h)
 
 add_executable(Googom ${SOURCES})
 

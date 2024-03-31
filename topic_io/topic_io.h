@@ -5,6 +5,23 @@
 #ifndef GOOGOM_TOPIC_IO_H
 #define GOOGOM_TOPIC_IO_H
 
-class topic_io {};
+#include <arrow/api.h>
+#include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
+
+#include <iostream>
+
+#include "../topic_public/topic_structure.h"
+
+class TopicIO {
+public:
+    bool openFile(
+      const std::string& filePath,
+      std::shared_ptr<arrow::io::ReadableFile>& file);
+    // Function to handle reading record batches
+    bool readRecordBatches(
+      const std::shared_ptr<arrow::ipc::RecordBatchFileReader>& fileReader);
+    void writeToDisk(const TopicStructure& data);
+};
 
 #endif // GOOGOM_TOPIC_IO_H
