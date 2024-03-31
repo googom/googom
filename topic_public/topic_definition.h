@@ -13,6 +13,8 @@
 
 #include <iostream>
 
+#include "../topic_io/topic_io.h"
+
 class TopicDefinition {
     const std::string topicName;
     const int partition;
@@ -24,11 +26,20 @@ class TopicDefinition {
 
     mp::uint128_t getAutoIncrementedOffset();
 
-
+    TopicIO topicIo=TopicIO();
 
 public:
     TopicDefinition(std::string topicName, int partition, int bufferSize, std::string diskFilePath);
     void insert(TopicStructure& data);
+
+    const std::string& getTopicName() const;
+    const int getPartition() const;
+    const std::vector<TopicStructure>& getRecentBuffer() const;
+    void setRecentBuffer(const std::vector<TopicStructure>& recentBuffer);
+    const std::vector<TopicStructure>& getOldestBuffer() const;
+    void setOldestBuffer(const std::vector<TopicStructure>& oldestBuffer);
+    const std::string& getDiskFilePath() const;
+    const int getBufferSize() const;
 };
 
 #endif // GOOGOM_TOPIC_DEFINITION_H

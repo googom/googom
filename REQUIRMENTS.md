@@ -30,3 +30,6 @@ Complete: update the record by its keys
 
 ## Custom events
 Topic should produce custom events for downstream applications when something happened such as schema changed or deleted
+
+## Schema evaluation 
+If set, the data has to be confirmed against the topic schema. This should be a flag in the topic creation time.

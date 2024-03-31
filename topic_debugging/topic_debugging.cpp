@@ -4,18 +4,19 @@
 
 #include "topic_debugging.h"
 
+void TopicDebugging::printDiskData(std::string diskFilePath) {
+    TopicIO topicIo = TopicIO();
 
-void TopicDebugging::printDiskData() {
     // Print data from the disk file
     std::cout << "Data from disk:" << std::endl;
     std::shared_ptr<arrow::io::ReadableFile> file;
-    if (!openFile(diskFilePath, file)) {
+    if (!topicIo.openFile(diskFilePath, file)) {
         return; // Handle error accordingly
     }
 
     auto fileReaderResult = arrow::ipc::RecordBatchFileReader::Open(file);
     if (!fileReaderResult.ok()) {
-        printError(
+        PrintUtilities::printError(
           "Error opening Arrow file for reading: "
           + fileReaderResult.status().ToString());
         return; // Handle error accordingly
@@ -24,7 +25,7 @@ void TopicDebugging::printDiskData() {
 
     std::cout << "Schema:\n" << fileReader->schema()->ToString() << std::endl;
 
-    if (!readRecordBatches(fileReader)) {
+    if (!topicIo.readRecordBatches(fileReader)) {
         return; // Handle error accordingly
     }
 
@@ -49,11 +50,4 @@ void TopicDebugging::printBuffer(
 
     std::cout << std::resetiosflags(std::ios::basefield);
 }
-
-void TopicDebugging::printAllData() {
-    printBuffer(recentBuffer, "recentBuffer");
-
-    printDiskData();
-
-    printBuffer(oldestBuffer, "oldestBuffer");
-}
+TopicDebugging::TopicDebugging() {}

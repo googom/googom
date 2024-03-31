@@ -8,6 +8,9 @@
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
+#include "../utilities/print_utilities.h"
+
+#include "../topic_io/topic_io.h"
 
 #include <iostream>
 
@@ -15,13 +18,11 @@
 
 class TopicDebugging {
 
-
-    void printDiskData();
+public:
+    TopicDebugging();
+    void printDiskData(std::string diskFilePath);
     static void printBuffer(
       const std::vector<TopicStructure>& buffer, const std::string& name);
-
-public:
-    void printAllData();
 };
 
 #endif // GOOGOM_TOPIC_DEBUGGING_H

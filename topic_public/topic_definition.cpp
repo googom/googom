@@ -15,9 +15,6 @@ mp::uint128_t TopicDefinition::getAutoIncrementedOffset() {
 }
 
 
-
-
-
 TopicDefinition::TopicDefinition(
   std::string topicName,
   int partition,
@@ -34,7 +31,7 @@ TopicDefinition::TopicDefinition(
 void TopicDefinition::insert(TopicStructure& data) {
     data.setOffset(getAutoIncrementedOffset());
 
-    writeToDisk(data);
+    topicIo.writeToDisk(diskFilePath, data);
 
     // TODO populate data from disk for recent
     recentBuffer.push_back(data);
@@ -42,5 +39,23 @@ void TopicDefinition::insert(TopicStructure& data) {
         recentBuffer.erase(recentBuffer.begin());
     }
 }
-
-
+const std::string& TopicDefinition::getTopicName() const { return topicName; }
+const int TopicDefinition::getPartition() const { return partition; }
+const std::vector<TopicStructure>& TopicDefinition::getRecentBuffer() const {
+    return recentBuffer;
+}
+void TopicDefinition::setRecentBuffer(
+  const std::vector<TopicStructure>& recentBuffer) {
+    TopicDefinition::recentBuffer = recentBuffer;
+}
+const std::vector<TopicStructure>& TopicDefinition::getOldestBuffer() const {
+    return oldestBuffer;
+}
+void TopicDefinition::setOldestBuffer(
+  const std::vector<TopicStructure>& oldestBuffer) {
+    TopicDefinition::oldestBuffer = oldestBuffer;
+}
+const std::string& TopicDefinition::getDiskFilePath() const {
+    return diskFilePath;
+}
+const int TopicDefinition::getBufferSize() const { return bufferSize; }

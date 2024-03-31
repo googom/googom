@@ -10,7 +10,7 @@ bool TopicIO::openFile(
     auto status = arrow::io::ReadableFile::Open(
       filePath, arrow::default_memory_pool());
     if (!status.ok()) {
-        printError(
+        PrintUtilities::printError(
           "Error opening Arrow file for reading: "
           + status.status().ToString());
         return false;
@@ -32,7 +32,7 @@ bool TopicIO::readRecordBatches(
                 break;
             } else {
                 // Some other error occurred
-                printError(
+                PrintUtilities::printError(
                   "Error reading record batch " + std::to_string(i) + ": "
                   + result.status().ToString());
                 success = false; // Update success status
@@ -47,7 +47,7 @@ bool TopicIO::readRecordBatches(
     return success; // Return overall success status
 }
 
-void TopicIO::writeToDisk(const TopicStructure& data) {
+void TopicIO::writeToDisk(std::string diskFilePath,const TopicStructure& data) {
     // Open file in append mode or create a new one if it doesn't exist
     auto file_result = arrow::io::FileOutputStream::Open(diskFilePath, true);
     if (!file_result.ok()) {
