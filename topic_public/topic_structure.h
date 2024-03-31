@@ -11,6 +11,11 @@
 #include <arrow/ipc/api.h>
 #include <boost/multiprecision/cpp_int.hpp>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/serialization.hpp>
+
+
 #include <iostream>
 #include <utility>
 
@@ -35,6 +40,17 @@ class TopicStructure {
     //  INFORMATION OF THE ANNOUNCEMENT. IT COULD BE SOMETHING DECOMISSIONING
     std::int8_t flags;
     std::vector<uint8_t> value; // Representing binary data
+
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & offset;
+        ar & timestamp;
+        ar & keys;
+        ar & headers;
+        ar & flags;
+        ar & value;
+    }
 
 public:
     TopicStructure() {}

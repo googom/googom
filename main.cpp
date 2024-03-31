@@ -5,6 +5,10 @@
 int main() {
     // Example usage
     const int bufferSize = 5;
+
+    std::string text = "Hello World!";
+    std::vector<uint8_t> binaryValue(text.begin(), text.end());
+
     TopicDefinition topicDefinition("SampleTopic", 0, bufferSize, "data.arrow");
 
     TopicStructure topicStructure = {
@@ -12,7 +16,7 @@ int main() {
       "{}",
       "{}",
       0,
-      {0xde, 0xad, 0xbe, 0xef} // Example binary data
+      binaryValue // Example binary data
     };
 
     // Simulate inserting multiple data entries
@@ -25,7 +29,7 @@ int main() {
     TopicDebugging topicDebugging = TopicDebugging();
     topicDebugging.printBuffer(
       topicDefinition.getRecentBuffer(), "recentBuffer");
-    //topicDebugging.printDiskData("data.arrow");
+    topicDebugging.printDiskData("data.arrow");
     topicDebugging.printBuffer(
       topicDefinition.getOldestBuffer(), "oldestBuffer");
 

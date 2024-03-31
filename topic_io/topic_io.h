@@ -1,28 +1,23 @@
-//
-// Created by root on 3/31/24.
-//
-
 #ifndef GOOGOM_TOPIC_IO_H
 #define GOOGOM_TOPIC_IO_H
 
-#include <arrow/api.h>
-#include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
-
-#include <iostream>
-
 #include "../topic_public/topic_structure.h"
-#include "../utilities/print_utilities.h"
+
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+
+#include <fstream>
 
 class TopicIO {
 public:
-    bool openFile(
-      const std::string& filePath,
-      std::shared_ptr<arrow::io::ReadableFile>& file);
-    // Function to handle reading record batches
-    bool readRecordBatches(
-      const std::shared_ptr<arrow::ipc::RecordBatchFileReader>& fileReader);
-    void writeToDisk(std::string diskFilePath,const TopicStructure& data);
+    bool openFile(const std::string& filePath, std::fstream& file);
+    std::vector<TopicStructure> readRecordBatches(const std::string& filePath);
+    void writeToDisk(const std::string& filePath, const TopicStructure& data);
+    virtual ~TopicIO();
 };
-
+// TODO dump results to a temp file in case of Panic
+TopicIO::~TopicIO() {}
 #endif // GOOGOM_TOPIC_IO_H

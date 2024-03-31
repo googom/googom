@@ -23,6 +23,8 @@ find_package (Seastar REQUIRED)
 
 find_package(Arrow REQUIRED)
 
+find_package(Boost REQUIRED COMPONENTS serialization)
+
 set(SOURCES
         main.cpp
         topic_public/topic_definition.cpp
@@ -40,9 +42,10 @@ add_executable(Googom ${SOURCES})
 message(STATUS "Arrow version: ${ARROW_VERSION}")
 message(STATUS "Arrow SO version: ${ARROW_FULL_SO_VERSION}")
 
+include_directories(${Boost_INCLUDE_DIRS})
 
 if(ARROW_LINK_SHARED)
-    target_link_libraries(Googom PRIVATE Arrow::arrow_shared Seastar::seastar)
+    target_link_libraries(Googom PRIVATE Arrow::arrow_shared Seastar::seastar ${Boost_LIBRARIES})
 else()
-    target_link_libraries(Googom PRIVATE Arrow::arrow_static Seastar::seastar)
+    target_link_libraries(Googom PRIVATE Arrow::arrow_static Seastar::seastar ${Boost_LIBRARIES})
 endif()

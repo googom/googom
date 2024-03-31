@@ -5,18 +5,18 @@
 #ifndef GOOGOM_TOPIC_DEBUGGING_H
 #define GOOGOM_TOPIC_DEBUGGING_H
 
+#include "../topic_io/topic_io.h"
+#include "../topic_public/topic_structure.h"
+#include "../utilities/print_utilities.h"
+
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
-#include "../utilities/print_utilities.h"
-
-#include "../topic_io/topic_io.h"
 
 #include <iostream>
 
-#include "../topic_public/topic_structure.h"
-
 class TopicDebugging {
+    TopicIO topicIo = TopicIO{};
 
 public:
     TopicDebugging();
