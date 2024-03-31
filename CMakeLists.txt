@@ -3,6 +3,8 @@ project(Googom)
 
 include(ExternalProject)  # Include the ExternalProject module
 
+option(ARROW_LINK_SHARED "Link to the Arrow shared library" ON)
+
 message(STATUS "CMake binary directory: ${CMAKE_BINARY_DIR}")
 
 find_program(CCACHE_FOUND ccache)
@@ -19,9 +21,22 @@ set(Seastar_CXX_DIALECT "gnu++20" CACHE STRING "")
 
 find_package (Seastar REQUIRED)
 
+find_package(Arrow REQUIRED)
+
 set(SOURCES
-        main.cpp)
+        main.cpp
+        public_topic/topic_definition.cpp
+        public_topic/topic_definition.h
+        public_topic/topic_structure.h)
 
 add_executable(Googom ${SOURCES})
 
-target_link_libraries (Googom Seastar::seastar)
+message(STATUS "Arrow version: ${ARROW_VERSION}")
+message(STATUS "Arrow SO version: ${ARROW_FULL_SO_VERSION}")
+
+
+if(ARROW_LINK_SHARED)
+    target_link_libraries(Googom PRIVATE Arrow::arrow_shared Seastar::seastar)
+else()
+    target_link_libraries(Googom PRIVATE Arrow::arrow_static Seastar::seastar)
+endif()

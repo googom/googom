@@ -1,18 +1,27 @@
-#include <seastar/core/app-template.hh>
-#include <seastar/core/coroutine.hh>
+#include "public_topic/topic_definition.h"
+#include "public_topic/topic_structure.h"
 
-using namespace seastar;
+int main() {
+    // Example usage
+    const int bufferSize = 5;
+    topic_definition storage("SampleTopic", 0, bufferSize, "data.arrow");
 
-namespace {
-    seastar::logger lg("main");
-}
+    topic_structure sampleData = {
+      "2024-03-29",
+      "{}",
+      "{}",
+      0,
+      {0xde, 0xad, 0xbe, 0xef} // Example binary data
+    };
 
-int main(int argc, char **argv) {
-    seastar::app_template app;
-    namespace po = boost::program_options;
+    // Simulate inserting multiple data entries
+    for (int i = 0; i < 100; ++i) {
+        storage.insert(sampleData);
+    }
 
-    return app.run(argc, argv, [&]() -> seastar::future<int> {
-        lg.info("hello world!");
-        co_return 0;
-    });
+    std::cout << "Data insertion completed." << std::endl;
+
+    storage.printAllData();
+
+    return 0;
 }
