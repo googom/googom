@@ -6,7 +6,7 @@ bool TopicIO::fileExists(const std::string& filePath) {
     try {
         file.open(filePath, std::ios::in | std::ios::out | std::ios::binary);
         if (!file.is_open()) {
-            std::cerr << "Error opening file: " << filePath << std::endl;
+            std::cerr << "1. Error opening file: " << filePath << std::endl;
             fileExists = false;
         } else {
             fileExists = true;
@@ -18,17 +18,14 @@ bool TopicIO::fileExists(const std::string& filePath) {
     return fileExists;
 }
 
-// This function will load the most recent and the oldest buffers. Also, will
-// provide latest offset.
-// TODO function is heavily overloaded. Responsibilities should be seperated in
-// the future
+
 std::vector<TopicStructure> TopicIO::fillVector(const std::string& filePath) {
     vectorAllData.clear();
 
     // std::vector<TopicStructure> tempVector{};
 
     if (!fileExists(filePath)) {
-        std::cerr << "Error opening file: " << filePath << std::endl;
+        std::cerr << "2 Error opening file: " << filePath << std::endl;
         return vectorAllData;
     }
 
@@ -66,10 +63,10 @@ std::vector<TopicStructure> TopicIO::fillVector(const std::string& filePath) {
 
 void TopicIO::writeToDisk(
   const std::string& filePath, const TopicStructure& data) {
-    if (sharedFile.is_open()) openSharedFile(filePath);
+    if (!sharedFile.is_open()) openSharedFile(filePath);
 
     if (!sharedFile.is_open()) {
-        std::cerr << "Error opening file: " << filePath << std::endl;
+        std::cerr << "3 Error opening file: " << filePath << std::endl;
         return;
     }
 

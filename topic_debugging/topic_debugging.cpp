@@ -29,8 +29,6 @@ void TopicDebugging::printDiskData(std::string diskFilePath) {
          */
         std::cout << std::endl;
     }
-
-    topicIo.closeSharedFile();
 }
 
 
