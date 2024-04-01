@@ -5,6 +5,7 @@
 #ifndef GOOGOM_TOPIC_DEFINITION_H
 #define GOOGOM_TOPIC_DEFINITION_H
 
+#include "../topic_io/topic_io.h"
 #include "topic_structure.h"
 
 #include <arrow/api.h>
@@ -12,8 +13,6 @@
 #include <arrow/ipc/api.h>
 
 #include <iostream>
-
-#include "../topic_io/topic_io.h"
 
 class TopicDefinition {
     const std::string topicName;
@@ -26,10 +25,16 @@ class TopicDefinition {
 
     mp::uint128_t getAutoIncrementedOffset();
 
-    TopicIO topicIo=TopicIO();
+    TopicIO topicIo = TopicIO();
+
+    void initialLoadBufferFromDisk();
 
 public:
-    TopicDefinition(std::string topicName, int partition, int bufferSize, std::string diskFilePath);
+    TopicDefinition(
+      std::string topicName,
+      int partition,
+      int bufferSize,
+      std::string diskFilePath);
     void insert(TopicStructure& data);
 
     const std::string& getTopicName() const;

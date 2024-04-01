@@ -8,12 +8,20 @@
 
 mp::uint128_t TopicDefinition::getAutoIncrementedOffset() {
     mp::uint128_t offset{0};
-    if (recentBuffer.empty()) return offset;
-    // TODO read from disk!!
+    if (recentBuffer.empty()) {
+        if (topicIo.fileExists(diskFilePath)) {
+            /*
+            auto data = topicIo.readRecordsFromTail(diskFilePath, 1);
+            offset = data.back().getOffset();
+            offset++;
+             */
+            throw std::runtime_error("Topic should be loaded to recent first");
+        }
+        return offset;
+    }
     offset = recentBuffer.back().getOffset();
     return ++offset;
 }
-
 
 TopicDefinition::TopicDefinition(
   std::string topicName,
@@ -26,6 +34,15 @@ TopicDefinition::TopicDefinition(
   , diskFilePath(std::move(diskFilePath)) {
     recentBuffer.reserve(bufferSize);
     oldestBuffer.reserve(bufferSize);
+
+    initialLoadBufferFromDisk();
+}
+
+void TopicDefinition::initialLoadBufferFromDisk() {
+    if (topicIo.fileExists(diskFilePath)) {
+        recentBuffer = topicIo.readRecordsFromTail(diskFilePath, bufferSize);
+        oldestBuffer = topicIo.readRecordsFromHead(diskFilePath, bufferSize);
+    }
 }
 
 void TopicDefinition::insert(TopicStructure& data) {

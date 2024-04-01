@@ -9,8 +9,9 @@
 void TopicDebugging::printDiskData(std::string diskFilePath) {
 
     std::cout << "Data from disk:" << std::endl;
-    for (const auto& item : topicIo.readRecordBatches(diskFilePath)) {
+    for (const auto& item : topicIo.readAllRecords(diskFilePath)) {
         std::cout << "Offset: " << item.getOffset() << std::endl;
+        /*
         std::cout << "Timestamp: " << item.getTimestamp() << std::endl;
         std::cout << "Keys: " << item.getKeys() << std::endl;
         std::cout << "Headers: " << item.getHeaders() << std::endl;
@@ -25,8 +26,11 @@ void TopicDebugging::printDiskData(std::string diskFilePath) {
         const auto& valueText = item.getValue();
         std::string text(valueText.begin(), valueText.end());
         std::cout << text << std::endl;
+         */
         std::cout << std::endl;
     }
+
+    topicIo.closeSharedFile();
 }
 
 
