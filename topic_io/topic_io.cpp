@@ -21,6 +21,7 @@ std::vector<TopicStructure> TopicIO::readRecordBatches(const std::string& filePa
     // Read and deserialize TopicStructure objects
     while (true) {
         TopicStructure data;
+
         try {
             boost::archive::binary_iarchive ia(file);
             ia >> data;

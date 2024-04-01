@@ -1,4 +1,4 @@
-# Topic structure
+# Public Topic structure
 
 ## The schema of the topic:
 
@@ -33,3 +33,18 @@ Topic should produce custom events for downstream applications when something ha
 
 ## Schema evaluation 
 If set, the data has to be confirmed against the topic schema. This should be a flag in the topic creation time.
+
+## Statistics
+Topic statistics should be saved and exported
+
+## Topic partitioning and replication
+Each topic should be able to partitioned. Partitioning strategy should be dynamic.
+
+Replication should be limited with available node count.
+
+
+# Private Topics structure
+
+These are internal topics. 
+
+These are will be used for governance and security

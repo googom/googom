@@ -16,8 +16,8 @@ public:
     bool openFile(const std::string& filePath, std::fstream& file);
     std::vector<TopicStructure> readRecordBatches(const std::string& filePath);
     void writeToDisk(const std::string& filePath, const TopicStructure& data);
-    virtual ~TopicIO();
+    //virtual ~TopicIO();
 };
 // TODO dump results to a temp file in case of Panic
-TopicIO::~TopicIO() {}
+// TopicIO::~TopicIO() {}
 #endif // GOOGOM_TOPIC_IO_H
