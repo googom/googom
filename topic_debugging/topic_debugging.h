@@ -16,11 +16,10 @@
 #include <iostream>
 
 class TopicDebugging {
-    TopicIO topicIo = TopicIO{};
 
 public:
     TopicDebugging();
-    void printDiskData(std::string diskFilePath);
+    static void printDiskData(std::string diskFilePath);
     static void printBuffer(
       const std::vector<TopicStructure>& buffer, const std::string& name);
 };

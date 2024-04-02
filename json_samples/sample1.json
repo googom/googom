@@ -15,6 +15,7 @@
       {
         "topicName": "t1",
         "quality": "bronze",
+        "retentionSeconds": 86400,
         "description": "why do we have this topic?",
         "SLA": "sla",
         "tags": [
@@ -39,6 +40,7 @@
             "fieldType": "int"
           }
         ],
+        // if this true, data has to be in json
         "schemeEnforced": true,
         "dqRules": [
           {
@@ -62,3 +64,4 @@
 // masking, transformations on topic level.
 // the biggest question is how to pass the data to the next topic?
 // better dq defintion is needed
+// security is missing

@@ -9,6 +9,7 @@ The data will be processed and transformed. This is a self-contained and highly 
 ## Components
 
 Smart message broker
+
 Data processing unit
 
 
