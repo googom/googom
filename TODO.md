@@ -24,3 +24,6 @@ Keys instead of key
 
 Mask and depromote the data to the lower envs. Connection should have been created
 
+## buffer update
+
+Both recent and oldest should be updated after insert and eater processes.
