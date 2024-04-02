@@ -40,6 +40,7 @@
             "fieldType": "int"
           }
         ],
+        // if this true, data has to be in json
         "schemeEnforced": true,
         "dqRules": [
           {

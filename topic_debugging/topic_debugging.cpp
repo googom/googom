@@ -7,6 +7,7 @@
 #include <fstream>
 
 void TopicDebugging::printDiskData(std::string diskFilePath) {
+    TopicIO topicIo = TopicIO{};
 
     std::cout << "Data from disk:" << std::endl;
     for (const auto& item : topicIo.readAllRecords(diskFilePath)) {

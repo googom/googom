@@ -20,18 +20,19 @@ int main() {
     };
 
     // Simulate inserting multiple data entries
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 10000; ++i) {
         topicDefinition.insert(topicStructure);
     }
 
     std::cout << "Data insertion completed." << std::endl;
 
-    TopicDebugging topicDebugging = TopicDebugging();
-    topicDebugging.printBuffer(
+    TopicDebugging::printBuffer(
       topicDefinition.getRecentBuffer(), "recentBuffer");
-    topicDebugging.printDiskData("data.arrow");
-    topicDebugging.printBuffer(
+    TopicDebugging::printBuffer(
       topicDefinition.getOldestBuffer(), "oldestBuffer");
+    
+
+    TopicDebugging::printDiskData("data.arrow");
 
     return 0;
 }
