@@ -6,7 +6,7 @@ bool TopicIO::fileExists(const std::string& filePath) {
     try {
         file.open(filePath, std::ios::in | std::ios::out | std::ios::binary);
         if (!file.is_open()) {
-            std::cerr << "1. Error opening file: " << filePath << std::endl;
+            std::cerr << "Error opening file: " << filePath << std::endl;
             fileExists = false;
         } else {
             fileExists = true;
@@ -25,7 +25,7 @@ std::vector<TopicStructure> TopicIO::fillVector(const std::string& filePath) {
     // std::vector<TopicStructure> tempVector{};
 
     if (!fileExists(filePath)) {
-        std::cerr << "2 Error opening file: " << filePath << std::endl;
+        std::cerr << "Error opening file: " << filePath << std::endl;
         return vectorAllData;
     }
 
@@ -66,7 +66,7 @@ void TopicIO::writeToDisk(
     if (!sharedFile.is_open()) openSharedFile(filePath);
 
     if (!sharedFile.is_open()) {
-        std::cerr << "3 Error opening file: " << filePath << std::endl;
+        std::cerr << "Error opening file: " << filePath << std::endl;
         return;
     }
 

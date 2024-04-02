@@ -43,8 +43,37 @@ Each topic should be able to partitioned. Partitioning strategy should be dynami
 Replication should be limited with available node count.
 
 
+## Topic files 
+
+### Topic files on the file system
+These files should be partitioned by offset. For every 10.000 records, there should be a new file.
+This value can be customizable.
+
+### Topic files naming
+topic-name-startOffset-endOffset
+
+Parsing should check only last 2 dashes to make sure, we do not interfere with topic naming.
+
 # Private Topics structure
 
 These are internal topics. 
 
-These are will be used for governance and security
+These topics will be used for governance and security.
+
+These topics will start with __ (double dashes). So, the public topics cannot start with double dash
+
+# Eater
+A process should eat data from all the topics according to their defined retention periods.
+
+# Configs
+
+Configs should have information about:
+1. Data storage location
+2. Default retention period
+3. Other nodes
+4. Enabled comm channels
+
+## Setup
+
+Node should check if there is a config topic in place. if it is not there, then the application should read from config file.
+Config file should be updated if there is a change in the config topic.
