@@ -27,3 +27,8 @@ Mask and depromote the data to the lower envs. Connection should have been creat
 ## buffer update
 
 Both recent and oldest should be updated after insert and eater processes.
+
+## topic blockers
+
+Read should be blocked during eating operation. Writes should be moved to a new file
+

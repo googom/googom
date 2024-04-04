@@ -76,3 +76,9 @@ const std::string& TopicDefinition::getDiskFilePath() const {
     return diskFilePath;
 }
 const int TopicDefinition::getBufferSize() const { return bufferSize; }
+
+//TODO this should generate the filename
+std::string
+TopicDefinition::topicFileNameGenerator(std::string topicName, int partition) {
+    throw std::runtime_error("not implemented");
+}
