@@ -37,6 +37,9 @@ public:
       std::string diskFilePath);
     void insert(TopicStructure& data);
 
+
+    std::string topicFileNameGenerator(std::string topicName, int partition);
+
     const std::string& getTopicName() const;
     const int getPartition() const;
     const std::vector<TopicStructure>& getRecentBuffer() const;
@@ -45,6 +48,8 @@ public:
     void setOldestBuffer(const std::vector<TopicStructure>& oldestBuffer);
     const std::string& getDiskFilePath() const;
     const int getBufferSize() const;
+
+
 };
 
 #endif // GOOGOM_TOPIC_DEFINITION_H
