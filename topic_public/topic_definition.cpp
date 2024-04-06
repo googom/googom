@@ -56,6 +56,8 @@ void TopicDefinition::insert(TopicStructure& data) {
         recentBuffer.erase(recentBuffer.begin());
     }
 }
+
+
 const std::string& TopicDefinition::getTopicName() const { return topicName; }
 const int TopicDefinition::getPartition() const { return partition; }
 const std::vector<TopicStructure>& TopicDefinition::getRecentBuffer() const {

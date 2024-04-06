@@ -2,15 +2,11 @@
 #include "topic_public/topic_definition.h"
 #include "topic_public/topic_structure.h"
 
-int main() {
-    // Example usage
-    const int bufferSize = 5;
+#include <seastar/core/app-template.hh>
+#include <seastar/core/coroutine.hh>
 
-    std::string text = "Hello World!";
-    std::vector<uint8_t> binaryValue(text.begin(), text.end());
-
-    TopicDefinition topicDefinition("SampleTopic", 0, bufferSize, "data.arrow");
-
+seastar::future<int>
+test(TopicDefinition& topicDefinition, std::vector<uint8_t> binaryValue) {
     TopicStructure topicStructure = {
       "2024-03-29",
       "{}",
@@ -21,7 +17,9 @@ int main() {
 
     // Simulate inserting multiple data entries
     for (int i = 0; i < 10000; ++i) {
-        topicDefinition.insert(topicStructure);
+        co_await seastar::smp::submit_to(i%8, [&topicDefinition, &topicStructure] {
+            topicDefinition.insert(topicStructure);
+        });
     }
 
     std::cout << "Data insertion completed." << std::endl;
@@ -30,9 +28,26 @@ int main() {
       topicDefinition.getRecentBuffer(), "recentBuffer");
     TopicDebugging::printBuffer(
       topicDefinition.getOldestBuffer(), "oldestBuffer");
-    
 
     TopicDebugging::printDiskData("data.arrow");
 
-    return 0;
+    co_return 0;
+}
+
+int main(int argc, char** argv) {
+    seastar::app_template app;
+
+    // Example usage
+    const int bufferSize = 5;
+
+    std::string text = "Hello World!";
+    std::vector<uint8_t> binaryValue(text.begin(), text.end());
+
+    TopicDefinition topicDefinition("SampleTopic", 0, bufferSize, "data.arrow");
+
+    return app.run(argc, argv, [&]() -> seastar::future<int> {
+        co_await test(topicDefinition, binaryValue);
+
+        co_return 0;
+    });
 }
