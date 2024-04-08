@@ -1,33 +1,37 @@
 #include "topic_debugging/topic_debugging.h"
-#include "topic_public/topic_definition.h"
-#include "topic_public/topic_structure.h"
+#include "topic_public/topic_public_definition.h"
+#include "topic_public/topic_public_structure.h"
+#include "utilities/utils.h"
 
 #include <seastar/core/app-template.hh>
 #include <seastar/core/coroutine.hh>
 
-seastar::future<int>
-test(TopicDefinition& topicDefinition, std::vector<uint8_t> binaryValue) {
-    TopicStructure topicStructure = {
-      "2024-03-29",
-      "{}",
-      "{}",
-      0,
-      binaryValue // Example binary data
-    };
+#include <iostream>
 
+seastar::future<int> test(
+  std::shared_ptr<TopicPublicDefinition> topicPublicDefinition,
+  std::vector<uint8_t> binaryValue) {
     // Simulate inserting multiple data entries
-    for (int i = 0; i < 10000; ++i) {
-        co_await seastar::smp::submit_to(i%8, [&topicDefinition, &topicStructure] {
-            topicDefinition.insert(topicStructure);
+    for (int i = 0; i < 10; ++i) {
+        co_await seastar::smp::submit_to(i % 8, [&topicPublicDefinition, binaryValue] {
+            TopicPublicStructure topicPublicStructure = {
+              Utils::getCurrentMicroseconds(),
+              "{}",
+              "{}",
+              0,
+              binaryValue // Example binary data
+            };
+
+            topicPublicDefinition->insert(topicPublicStructure);
         });
     }
 
     std::cout << "Data insertion completed." << std::endl;
 
     TopicDebugging::printBuffer(
-      topicDefinition.getRecentBuffer(), "recentBuffer");
+      topicPublicDefinition->getRecentBuffer(), "recentBuffer");
     TopicDebugging::printBuffer(
-      topicDefinition.getOldestBuffer(), "oldestBuffer");
+      topicPublicDefinition->getOldestBuffer(), "oldestBuffer");
 
     TopicDebugging::printDiskData("data.arrow");
 
@@ -43,10 +47,15 @@ int main(int argc, char** argv) {
     std::string text = "Hello World!";
     std::vector<uint8_t> binaryValue(text.begin(), text.end());
 
-    TopicDefinition topicDefinition("SampleTopic", 0, bufferSize, "data.arrow");
+    // TopicDefinition topicDefinition("SampleTopic", 0, bufferSize,
+    // "data.arrow");
+
+    std::shared_ptr<TopicPublicDefinition> sharedPtr
+      = std::make_shared<TopicPublicDefinition>(
+        "SampleTopic", 0, bufferSize, "data.googom");
 
     return app.run(argc, argv, [&]() -> seastar::future<int> {
-        co_await test(topicDefinition, binaryValue);
+        auto zero = co_await test(sharedPtr, binaryValue);
 
         co_return 0;
     });

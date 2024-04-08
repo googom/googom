@@ -27,15 +27,18 @@ find_package(Boost REQUIRED COMPONENTS serialization)
 
 set(SOURCES
         main.cpp
-        topic_public/topic_definition.cpp
-        topic_public/topic_definition.h
-        topic_public/topic_structure.h
+        topic_public/topic_public_definition.cpp
+        topic_public/topic_public_definition.h
+        topic_public/topic_public_structure.h
         topic_io/topic_io.cpp
         topic_io/topic_io.h
         topic_debugging/topic_debugging.cpp
         topic_debugging/topic_debugging.h
         utilities/print_utilities.cpp
-        utilities/print_utilities.h)
+        utilities/print_utilities.h
+        topic_private/topic_offset/topic_private_offset_structure.h
+        utilities/utils.cpp
+        utilities/utils.h)
 
 add_executable(Googom ${SOURCES})
 

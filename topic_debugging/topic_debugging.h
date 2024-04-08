@@ -6,7 +6,7 @@
 #define GOOGOM_TOPIC_DEBUGGING_H
 
 #include "../topic_io/topic_io.h"
-#include "../topic_public/topic_structure.h"
+#include "../topic_public/topic_public_structure.h"
 #include "../utilities/print_utilities.h"
 
 #include <arrow/api.h>
@@ -21,7 +21,7 @@ public:
     TopicDebugging();
     static void printDiskData(std::string diskFilePath);
     static void printBuffer(
-      const std::vector<TopicStructure>& buffer, const std::string& name);
+      const std::vector<TopicPublicStructure>& buffer, const std::string& name);
 };
 
 #endif // GOOGOM_TOPIC_DEBUGGING_H

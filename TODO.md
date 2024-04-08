@@ -32,3 +32,8 @@ Both recent and oldest should be updated after insert and eater processes.
 
 Read should be blocked during eating operation. Writes should be moved to a new file
 
+
+## problem statement
+
+Internal topic for offset management. I don't want to load all the disk data to know statistics about the topic/partition. For Recent, i need to know what is the highest offset to get only last records instead of loading all the items into the heap
+

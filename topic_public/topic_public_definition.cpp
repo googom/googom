@@ -2,11 +2,11 @@
 // Created by root on 3/30/24.
 //
 
-#include "topic_definition.h"
+#include "topic_public_definition.h"
 
 #include <utility>
 
-mp::uint128_t TopicDefinition::getAutoIncrementedOffset() {
+mp::uint128_t TopicPublicDefinition::getAutoIncrementedOffset() {
     mp::uint128_t offset{0};
     if (recentBuffer.empty()) {
         if (topicIo.fileExists(diskFilePath)) {
@@ -23,7 +23,7 @@ mp::uint128_t TopicDefinition::getAutoIncrementedOffset() {
     return ++offset;
 }
 
-TopicDefinition::TopicDefinition(
+TopicPublicDefinition::TopicPublicDefinition(
   std::string topicName,
   int partition,
   int bufferSize,
@@ -38,14 +38,14 @@ TopicDefinition::TopicDefinition(
     initialLoadBufferFromDisk();
 }
 
-void TopicDefinition::initialLoadBufferFromDisk() {
+void TopicPublicDefinition::initialLoadBufferFromDisk() {
     if (topicIo.fileExists(diskFilePath)) {
         recentBuffer = topicIo.readRecordsFromTail(diskFilePath, bufferSize);
         oldestBuffer = topicIo.readRecordsFromHead(diskFilePath, bufferSize);
     }
 }
 
-void TopicDefinition::insert(TopicStructure& data) {
+void TopicPublicDefinition::insert(TopicStructure& data) {
     data.setOffset(getAutoIncrementedOffset());
 
     topicIo.writeToDisk(diskFilePath, data);
@@ -58,29 +58,30 @@ void TopicDefinition::insert(TopicStructure& data) {
 }
 
 
-const std::string& TopicDefinition::getTopicName() const { return topicName; }
-const int TopicDefinition::getPartition() const { return partition; }
-const std::vector<TopicStructure>& TopicDefinition::getRecentBuffer() const {
+const std::string& TopicPublicDefinition::getTopicName() const { return topicName; }
+const int TopicPublicDefinition::getPartition() const { return partition; }
+const std::vector<TopicStructure>&
+TopicPublicDefinition::getRecentBuffer() const {
     return recentBuffer;
 }
-void TopicDefinition::setRecentBuffer(
+void TopicPublicDefinition::setRecentBuffer(
   const std::vector<TopicStructure>& recentBuffer) {
-    TopicDefinition::recentBuffer = recentBuffer;
+    TopicPublicDefinition::recentBuffer = recentBuffer;
 }
-const std::vector<TopicStructure>& TopicDefinition::getOldestBuffer() const {
+const std::vector<TopicStructure>&
+TopicPublicDefinition::getOldestBuffer() const {
     return oldestBuffer;
 }
-void TopicDefinition::setOldestBuffer(
+void TopicPublicDefinition::setOldestBuffer(
   const std::vector<TopicStructure>& oldestBuffer) {
-    TopicDefinition::oldestBuffer = oldestBuffer;
+    TopicPublicDefinition::oldestBuffer = oldestBuffer;
 }
-const std::string& TopicDefinition::getDiskFilePath() const {
+const std::string& TopicPublicDefinition::getDiskFilePath() const {
     return diskFilePath;
 }
-const int TopicDefinition::getBufferSize() const { return bufferSize; }
+const int TopicPublicDefinition::getBufferSize() const { return bufferSize; }
 
 //TODO this should generate the filename
-std::string
-TopicDefinition::topicFileNameGenerator(std::string topicName, int partition) {
+std::string TopicPublicDefinition::topicFileNameGenerator(std::string topicName, int partition) {
     throw std::runtime_error("not implemented");
 }

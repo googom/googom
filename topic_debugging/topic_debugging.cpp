@@ -35,7 +35,7 @@ void TopicDebugging::printDiskData(std::string diskFilePath) {
 
 
 void TopicDebugging::printBuffer(
-  const std::vector<TopicStructure>& buffer,
+  const std::vector<TopicPublicStructure>& buffer,
   const std::string&
     name) { // Print data from the recentBuffer buffer (in-memory)
     std::cout << "In-memory data " << name << " :" << std::endl;
