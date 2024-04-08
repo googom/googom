@@ -54,6 +54,8 @@ Timeseries (schema enforced)
 These files should be partitioned by offset. For every 10.000 records, there should be a new file.
 This value can be customizable.
 
+Saving data to memory first might be a lot faster than directly saving to the disk
+
 ### Topic files naming
 topic-name-startOffset-endOffset
 
@@ -96,3 +98,9 @@ There should be direct communication between nodes. For heartbeat and state. Eac
 Therefore, private topics should be always synced among nodes with high priority.
 
 Processing on this internal topics and internal port should have the highest possible priority
+
+# Offset management
+
+Offsets should be commited to a file either every 100 records, or when the application is going down.
+
+If the main save is failing, there should be a recovery file dump
