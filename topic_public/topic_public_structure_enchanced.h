@@ -17,10 +17,13 @@
 
 #include <iostream>
 #include <utility>
+#include "topic_public_structure.h"
 
 // Adjusted to use a string for offset to work around Apache Arrow type
 // limitations
-class TopicPublicStructure {
+class TopicPublicStructureEnchanced:public TopicPublicStructure {
+    boost::multiprecision::uint128_t offset;
+    unsigned long long timestamp;
     std::string keys;
     std::string headers;
     // THIS IS THE CUSTOM FLAG. IT WILL SHOW WHAT HAPPENED AND ALSO IN CASE OF
@@ -39,6 +42,8 @@ class TopicPublicStructure {
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive& ar, const unsigned int version) {
+        ar & offset;
+        ar & timestamp;
         ar & keys;
         ar & headers;
         ar & flags;
@@ -46,30 +51,39 @@ class TopicPublicStructure {
     }
 
 public:
-    TopicPublicStructure() {}
+    TopicPublicStructureEnchanced() {}
 
-    TopicPublicStructure(
+    TopicPublicStructureEnchanced(
+      unsigned long long timestamp,
       std::string keys,
       std::string headers,
       int8_t flags,
-      const std::vector<uint8_t>& value):
-      keys(std::move(keys))
+      const std::vector<uint8_t>& value)
+      : timestamp(timestamp)
+      , keys(std::move(keys))
       , headers(std::move(headers))
       , flags(flags)
       , value(value) {}
 
-
+    const boost::multiprecision::uint128_t& getOffset() const { return offset; }
+    void setOffset(const boost::multiprecision::uint128_t& offset) {
+        TopicPublicStructureEnchanced::offset = offset;
+    }
+    const unsigned long long& getTimestamp() const { return timestamp; }
+    void setTimestamp(const unsigned long long& timestamp) {
+        TopicPublicStructureEnchanced::timestamp = timestamp;
+    }
     const std::string& getKeys() const { return keys; }
-    void setKeys(const std::string& keys) { TopicPublicStructure::keys = keys; }
+    void setKeys(const std::string& keys) { TopicPublicStructureEnchanced::keys = keys; }
     const std::string& getHeaders() const { return headers; }
     void setHeaders(const std::string& headers) {
-        TopicPublicStructure::headers = headers;
+        TopicPublicStructureEnchanced::headers = headers;
     }
     int8_t getFlags() const { return flags; }
-    void setFlags(int8_t flags) { TopicPublicStructure::flags = flags; }
+    void setFlags(int8_t flags) { TopicPublicStructureEnchanced::flags = flags; }
     const std::vector<uint8_t>& getValue() const { return value; }
     void setValue(const std::vector<uint8_t>& value) {
-        TopicPublicStructure::value = value;
+        TopicPublicStructureEnchanced::value = value;
     }
 };
 

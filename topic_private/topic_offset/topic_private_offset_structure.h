@@ -18,12 +18,11 @@
 #include <iostream>
 #include <utility>
 
-namespace mp = boost::multiprecision;
 
 
 //This should be in memory all the time!
 class TopicPrivateOffsetStructure {
-    mp::uint128_t offset;
+    boost::multiprecision::uint128_t offset;
     unsigned long long timestamp;
     std::string topic;
     uint8_t partition;

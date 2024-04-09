@@ -6,8 +6,8 @@
 
 #include <utility>
 
-mp::uint128_t TopicPublicDefinition::getAutoIncrementedOffset() {
-    mp::uint128_t offset{0};
+boost::multiprecision::uint128_t TopicPublicDefinition::getAutoIncrementedOffset() {
+    boost::multiprecision::uint128_t offset{0};
     if (recentBuffer.empty()) {
         if (topicIo.fileExists(diskFilePath)) {
             /*
@@ -45,7 +45,7 @@ void TopicPublicDefinition::initialLoadBufferFromDisk() {
     }
 }
 
-void TopicPublicDefinition::insert(TopicStructure& data) {
+void TopicPublicDefinition::insert(const TopicPublicStructure& data) {
     data.setOffset(getAutoIncrementedOffset());
 
     topicIo.writeToDisk(diskFilePath, data);
@@ -60,20 +60,20 @@ void TopicPublicDefinition::insert(TopicStructure& data) {
 
 const std::string& TopicPublicDefinition::getTopicName() const { return topicName; }
 const int TopicPublicDefinition::getPartition() const { return partition; }
-const std::vector<TopicStructure>&
+const std::vector<TopicPublicStructure>&
 TopicPublicDefinition::getRecentBuffer() const {
     return recentBuffer;
 }
 void TopicPublicDefinition::setRecentBuffer(
-  const std::vector<TopicStructure>& recentBuffer) {
+  const std::vector<TopicPublicStructure>& recentBuffer) {
     TopicPublicDefinition::recentBuffer = recentBuffer;
 }
-const std::vector<TopicStructure>&
+const std::vector<TopicPublicStructure>&
 TopicPublicDefinition::getOldestBuffer() const {
     return oldestBuffer;
 }
 void TopicPublicDefinition::setOldestBuffer(
-  const std::vector<TopicStructure>& oldestBuffer) {
+  const std::vector<TopicPublicStructure>& oldestBuffer) {
     TopicPublicDefinition::oldestBuffer = oldestBuffer;
 }
 const std::string& TopicPublicDefinition::getDiskFilePath() const {

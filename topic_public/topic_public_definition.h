@@ -25,7 +25,7 @@ class TopicPublicDefinition {
     const std::string diskFilePath;
     const int bufferSize;
 
-    mp::uint128_t getAutoIncrementedOffset();
+    boost::multiprecision::uint128_t getAutoIncrementedOffset();
 
     TopicIO topicIo = TopicIO();
 
@@ -37,7 +37,8 @@ public:
       int partition,
       int bufferSize,
       std::string diskFilePath);
-    void insert(TopicPublicStructure& data);
+
+    void insert(const TopicPublicStructure& data);
 
 
     std::string topicFileNameGenerator(std::string topicName, int partition);
