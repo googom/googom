@@ -2,8 +2,8 @@
 // Created by root on 3/31/24.
 //
 
-#ifndef GOOGOM_TOPIC_PUBLIC_STRUCTURE_H
-#define GOOGOM_TOPIC_PUBLIC_STRUCTURE_H
+#ifndef GOOGOM_TOPIC_PUBLIC_MESSAGE_H
+#define GOOGOM_TOPIC_PUBLIC_MESSAGE_H
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>
@@ -56,4 +56,4 @@ public:
     }
 };
 
-#endif // GOOGOM_TOPIC_PUBLIC_STRUCTURE_H
+#endif // GOOGOM_TOPIC_PUBLIC_MESSAGE_H

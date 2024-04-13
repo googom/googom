@@ -50,21 +50,21 @@ void TopicPublicDefinition::insert(const TopicPublicMessage& data) {
     TopicPublicStructure topicPublicStructure=TopicPublicStructure(
                                                   getAutoIncrementedOffset(),
                                                   Utils::getCurrentMicroseconds(),
-                                                  data.keys,
-                                                  data.headers,
+                                                  data.getKeys(),
+                                                  data.getHeaders(),
                                                   0,
-                                                  data.value
-                                                  )
+                                                  data.getValue()
+                                                  );
 
     //
     //Utils::getCurrentMicroseconds(),
 
-    data.setOffset(getAutoIncrementedOffset());
+    //data.setOffset(getAutoIncrementedOffset());
 
     topicIo.writeToDisk(diskFilePath, topicPublicStructure);
 
     // TODO populate data from disk for recent
-    recentBuffer.push_back(data);
+    recentBuffer.push_back(topicPublicStructure);
     if (recentBuffer.size() > bufferSize) {
         recentBuffer.erase(recentBuffer.begin());
     }
