@@ -45,10 +45,23 @@ void TopicPublicDefinition::initialLoadBufferFromDisk() {
     }
 }
 
-void TopicPublicDefinition::insert(const TopicPublicStructure& data) {
+void TopicPublicDefinition::insert(const TopicPublicMessage& data) {
+
+    TopicPublicStructure topicPublicStructure=TopicPublicStructure(
+                                                  getAutoIncrementedOffset(),
+                                                  Utils::getCurrentMicroseconds(),
+                                                  data.keys,
+                                                  data.headers,
+                                                  0,
+                                                  data.value
+                                                  )
+
+    //
+    //Utils::getCurrentMicroseconds(),
+
     data.setOffset(getAutoIncrementedOffset());
 
-    topicIo.writeToDisk(diskFilePath, data);
+    topicIo.writeToDisk(diskFilePath, topicPublicStructure);
 
     // TODO populate data from disk for recent
     recentBuffer.push_back(data);

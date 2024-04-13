@@ -39,7 +39,7 @@ set(SOURCES
         topic_private/topic_offset/topic_private_offset_structure.h
         utilities/utils.cpp
         utilities/utils.h
-        topic_public/topic_public_structure_enchanced.h)
+        topic_public/topic_public_message.h)
 
 add_executable(Googom ${SOURCES})
 

@@ -1,7 +1,6 @@
 #include "topic_debugging/topic_debugging.h"
 #include "topic_public/topic_public_definition.h"
-#include "topic_public/topic_public_structure.h"
-#include "utilities/utils.h"
+#include "topic_public/topic_public_message.h"
 
 #include <seastar/core/app-template.hh>
 #include <seastar/core/coroutine.hh>
@@ -14,15 +13,13 @@ seastar::future<int> test(
     // Simulate inserting multiple data entries
     for (int i = 0; i < 10; ++i) {
         co_await seastar::smp::submit_to(i % 8, [&topicPublicDefinition, binaryValue] {
-            TopicPublicStructure topicPublicStructure = {
-              Utils::getCurrentMicroseconds(),
+            TopicPublicMessage topicPublicMessage = {
               "{}",
               "{}",
-              0,
               binaryValue // Example binary data
             };
 
-            topicPublicDefinition->insert(topicPublicStructure);
+            topicPublicDefinition->insert(topicPublicMessage);
         });
     }
 

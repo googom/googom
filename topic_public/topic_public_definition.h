@@ -7,6 +7,8 @@
 
 #include "../topic_io/topic_io.h"
 #include "topic_public_structure.h"
+#include "topic_public_message.h"
+#include "utilities/utils.h"
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>
@@ -38,7 +40,7 @@ public:
       int bufferSize,
       std::string diskFilePath);
 
-    void insert(const TopicPublicStructure& data);
+    void insert(const TopicPublicMessage& data);
 
 
     std::string topicFileNameGenerator(std::string topicName, int partition);

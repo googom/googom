@@ -21,6 +21,8 @@
 // Adjusted to use a string for offset to work around Apache Arrow type
 // limitations
 class TopicPublicStructure {
+    boost::multiprecision::uint128_t offset;
+    unsigned long long timestamp;
     std::string keys;
     std::string headers;
     // THIS IS THE CUSTOM FLAG. IT WILL SHOW WHAT HAPPENED AND ALSO IN CASE OF
@@ -39,6 +41,8 @@ class TopicPublicStructure {
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive& ar, const unsigned int version) {
+        ar & offset;
+        ar & timestamp;
         ar & keys;
         ar & headers;
         ar & flags;
@@ -49,16 +53,40 @@ public:
     TopicPublicStructure() {}
 
     TopicPublicStructure(
+      unsigned long long timestamp,
       std::string keys,
       std::string headers,
       int8_t flags,
-      const std::vector<uint8_t>& value):
-      keys(std::move(keys))
+      const std::vector<uint8_t>& value)
+      : timestamp(timestamp)
+      , keys(std::move(keys))
       , headers(std::move(headers))
       , flags(flags)
       , value(value) {}
 
 
+    TopicPublicStructure(
+      boost::multiprecision::uint128_t offset,
+      unsigned long long timestamp,
+      std::string keys,
+      std::string headers,
+      int8_t flags,
+      const std::vector<uint8_t>& value)
+      : offset(offset)
+      , timestamp(timestamp)
+      , keys(std::move(keys))
+      , headers(std::move(headers))
+      , flags(flags)
+      , value(value) {}
+
+    const boost::multiprecision::uint128_t& getOffset() const { return offset; }
+    void setOffset(const boost::multiprecision::uint128_t& offset) {
+        TopicPublicStructure::offset = offset;
+    }
+    const unsigned long long& getTimestamp() const { return timestamp; }
+    void setTimestamp(const unsigned long long& timestamp) {
+        TopicPublicStructure::timestamp = timestamp;
+    }
     const std::string& getKeys() const { return keys; }
     void setKeys(const std::string& keys) { TopicPublicStructure::keys = keys; }
     const std::string& getHeaders() const { return headers; }
