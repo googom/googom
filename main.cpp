@@ -30,7 +30,7 @@ seastar::future<int> test(
     TopicDebugging::printBuffer(
       topicPublicDefinition->getOldestBuffer(), "oldestBuffer");
 
-    TopicDebugging::printDiskData("data.arrow");
+    TopicDebugging::printDiskData("data.googom");
 
     co_return 0;
 }
