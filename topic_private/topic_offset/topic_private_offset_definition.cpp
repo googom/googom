@@ -4,6 +4,3 @@
 
 #include "topic_private_offset_definition.h"
 
-void TopicPrivateOffsetDefinition::insertNewOffset(TopicPrivateOffsetDefinition &topicPrivateOffsetDefinition) {
-
-}

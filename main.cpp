@@ -1,6 +1,7 @@
 #include "topic_debugging/topic_debugging.h"
 #include "topic_public/topic_public_definition.h"
 #include "topic_public/topic_public_message.h"
+#include "topic_private/topic_offset/topic_private_offset_definition.h"
 
 #include <seastar/core/app-template.hh>
 #include <seastar/core/coroutine.hh>
@@ -47,7 +48,8 @@ int main(int argc, char** argv) {
     // TopicDefinition topicDefinition("SampleTopic", 0, bufferSize,
     // "data.arrow");
 
-    std::shared_ptr<TopicPublicDefinition> sharedPtr
+    /*
+     * std::shared_ptr<TopicPublicDefinition> sharedPtr
       = std::make_shared<TopicPublicDefinition>(
         "SampleTopic", 0, bufferSize, "data.googom");
 
@@ -56,4 +58,32 @@ int main(int argc, char** argv) {
 
         co_return 0;
     });
+     */
+
+    MyStructDataset dataset;
+
+    // Construct TopicPrivateOffsetStructure instances explicitly
+    TopicPrivateOffsetStructure struct1(boost::multiprecision::uint128_t(100), 123456789, "topic1", "node1", 1, "type1");
+    TopicPrivateOffsetStructure struct2(boost::multiprecision::uint128_t(200), 987654321, "topic2", "node2", 2, "type2");
+
+    // Insert the constructed instances
+    dataset.Insert(struct1);
+    dataset.Insert(struct2);
+
+    // Update an existing instance
+    TopicPrivateOffsetStructure updatedStruct(boost::multiprecision::uint128_t(100), 999999999, "updated_topic", "updated_node", 3, "updated_type");
+    dataset.Update(0, updatedStruct);
+
+    // Print all instances
+    dataset.PrintAll();
+
+    // Search for a struct by offset
+    int index = dataset.SearchByOffset(boost::multiprecision::uint128_t(100));
+    if (index != -1) {
+        std::cout << "Struct found at index " << index << std::endl;
+    } else {
+        std::cout << "Struct not found" << std::endl;
+    }
+
+    return 0;
 }
