@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     });
      */
 
-    MyStructDataset dataset;
+    TopicPrivateOffsetDefinition dataset;
 
     // Construct TopicPrivateOffsetStructure instances explicitly
     TopicPrivateOffsetStructure struct1(boost::multiprecision::uint128_t(100), 123456789, "topic1", "node1", 1, "type1");
