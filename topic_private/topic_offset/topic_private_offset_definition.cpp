@@ -47,7 +47,8 @@ TopicPrivateOffsetStructure TopicPrivateOffsetDefinition::searchByCriteriaTypeRe
         return *it;
     }
 
-    throw std::runtime_error("No matching record found");  // or return a default instance, based on your error handling strategy
+    return {};
+    //throw std::runtime_error("No matching record found");  // or return a default instance, based on your error handling strategy
 }
 
 // Method to search for a structure by specific criteria and return its index
@@ -75,6 +76,19 @@ void TopicPrivateOffsetDefinition::printStruct(const TopicPrivateOffsetStructure
               << "Node ID: " << p_struct.getNodeId() << ", "
               << "Partition: " << static_cast<int>(p_struct.getPartition()) << ", " // Cast to int for proper printing
               << "Type: " << p_struct.getType() << std::endl;
+}
+
+// Print the details of a single TopicPrivateOffsetStructure
+void TopicPrivateOffsetDefinition::printStruct(int index) {
+    if (index >= 0 && index < static_cast<int>(privateOffsetStructure.size())) {
+        std::cout << "Offset: " << privateOffsetStructure[index].getOffset() << ", "
+                  << "Timestamp: " << privateOffsetStructure[index].getTimestamp() << ", "
+                  << "Topic: " << privateOffsetStructure[index].getTopic() << ", "
+                  << "Node ID: " << privateOffsetStructure[index].getNodeId() << ", "
+                  << "Partition: " << static_cast<int>(privateOffsetStructure[index].getPartition())
+                  << ", " // Cast to int for proper printing
+                  << "Type: " << privateOffsetStructure[index].getType() << std::endl;
+    }
 }
 
 // Print all TopicPrivateOffsetStructures in the privateOffsetStructure vector

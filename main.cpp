@@ -94,11 +94,11 @@ int main(int argc, char **argv) {
 
     std::cout << "\n\n";
 
-    auto searchResult = dataset.searchByCriteriaTypeReturn("topic1", "node1", 3, "type1");
+    auto searchResult = dataset.searchByCriteria("updated_topic", "updated_node", 3, "updated_type");
 
     dataset.printStruct(searchResult);
 
-    auto se = dataset.searchByCriteriaTypeReturn("topic1", "node1", 3, "type1");
+    auto se = dataset.searchByCriteriaTypeReturn("updated_topic", "updated_node", 3, "updated_type");
 
     std::cout << "type " << se.getType();
 

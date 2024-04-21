@@ -41,6 +41,8 @@ public:
     // Function to print a single TopicPrivateOffsetStructure
     void printStruct(const TopicPrivateOffsetStructure& p_struct);
 
+    void printStruct(int index);
+
 };
 
 #endif //GOOGOM_TOPIC_PRIVATE_OFFSET_DEFINITION_H
