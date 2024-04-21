@@ -13,6 +13,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/serialization.hpp>
+#include <arrow/builder.h>
 
 
 #include <iostream>
@@ -43,6 +44,11 @@ class TopicPrivateOffsetStructure {
 
 public:
     TopicPrivateOffsetStructure() {}
+
+    TopicPrivateOffsetStructure(
+            const std::string &topic, const std::string &nodeId, uint8_t partition,
+            const std::string &type) : topic(topic),
+                                       nodeId(nodeId), partition(partition), type(type) {}
 
     TopicPrivateOffsetStructure(const boost::multiprecision::uint128_t &offset, unsigned long long int timestamp,
                                 const std::string &topic, const std::string &nodeId, uint8_t partition,

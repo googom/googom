@@ -1,7 +1,3 @@
-//
-// Created by root on 4/13/24.
-//
-
 #ifndef GOOGOM_TOPIC_PRIVATE_OFFSET_DEFINITION_H
 #define GOOGOM_TOPIC_PRIVATE_OFFSET_DEFINITION_H
 
@@ -11,36 +7,40 @@
 #include <arrow/util/logging.h>
 #include <arrow/memory_pool.h>
 #include <boost/multiprecision/cpp_int.hpp>
-
+#include <vector>
+#include <memory>
+#include <unordered_map>
+#include <arrow/array.h>
+#include <arrow/scalar.h>
 
 class TopicPrivateOffsetDefinition {
+    std::vector<TopicPrivateOffsetStructure> privateOffsetStructure{};
+
 public:
     TopicPrivateOffsetDefinition();
 
-    void Insert(const TopicPrivateOffsetStructure& new_struct);
+    void insert(const TopicPrivateOffsetStructure &new_struct);
 
-    void Update(int index, const TopicPrivateOffsetStructure& updated_struct);
+    void update(int index, const TopicPrivateOffsetStructure &updated_struct);
 
-    int SearchByOffset(boost::multiprecision::uint128_t offset);
-
-    void PrintAll();
-
-private:
-    std::shared_ptr<arrow::Schema> schema_;
-    std::shared_ptr<arrow::RecordBatch> record_batch_;
-    std::vector<std::shared_ptr<arrow::RecordBatch>> record_batches_;
-
-    std::shared_ptr<arrow::Schema> GetSchema();
-
-    std::shared_ptr<arrow::RecordBatch> StructsToRecordBatch(const std::vector<TopicPrivateOffsetStructure>& structs);
-
-    void UpdateStruct(int index, const TopicPrivateOffsetStructure& updated_struct, std::shared_ptr<arrow::RecordBatch>& record_batch);
+    int searchByOffset(boost::multiprecision::uint128_t offset);
 
 
-    int SearchStructByOffset(boost::multiprecision::uint128_t offset, const std::shared_ptr<arrow::RecordBatch>& record_batch);
+    TopicPrivateOffsetStructure searchByCriteriaTypeReturn(const std::string &topic,
+                                                           const std::string &nodeId,
+                                                           uint8_t partition,
+                                                           const std::string &type);
 
-    void PrintStruct(int index);
+    int searchByCriteria(const std::string &topic,
+                         const std::string &nodeId,
+                         uint8_t partition,
+                         const std::string &type);
+
+    void printAll();  // Declaration for printing all structures
+
+    // Function to print a single TopicPrivateOffsetStructure
+    void printStruct(const TopicPrivateOffsetStructure& p_struct);
+
 };
-
 
 #endif //GOOGOM_TOPIC_PRIVATE_OFFSET_DEFINITION_H
