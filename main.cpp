@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     });
      */
 
-    TopicPrivateOffsetDefinition dataset;
+    auto dataset = TopicPrivateOffsetDefinition::getInstance();
 
     // Construct TopicPrivateOffsetStructure instances explicitly
     TopicPrivateOffsetStructure struct1(boost::multiprecision::uint128_t(100), 123456789, "topic1", "node1", 1,
@@ -69,23 +69,23 @@ int main(int argc, char **argv) {
                                         "type2");
 
     // Insert the constructed instances
-    dataset.insert(struct1);
-    dataset.insert(struct2);
+    dataset->insert(struct1);
+    dataset->insert(struct2);
 
-    dataset.printAll();
+    dataset->printAll();
 
     std::cout << "\n\n";
 
     // Update an existing instance
     TopicPrivateOffsetStructure updatedStruct(boost::multiprecision::uint128_t(100), 999999999, "updated_topic",
                                               "updated_node", 3, "updated_type");
-    dataset.update(0, updatedStruct);
+    dataset->update(0, updatedStruct);
 
     // Print all instances
-    dataset.printAll();
+    dataset->printAll();
 
     // Search for a struct by offset
-    int index = dataset.searchByOffset(boost::multiprecision::uint128_t(100));
+    int index = dataset->searchByOffset(boost::multiprecision::uint128_t(100));
     if (index != -1) {
         std::cout << "Struct found at index " << index << std::endl;
     } else {
@@ -94,11 +94,11 @@ int main(int argc, char **argv) {
 
     std::cout << "\n\n";
 
-    auto searchResult = dataset.searchByCriteria("updated_topic", "updated_node", 3, "updated_type");
+    auto searchResult = dataset->searchByCriteria("updated_topic", "updated_node", 3, "updated_type");
 
-    dataset.printStruct(searchResult);
+    dataset->printStruct(searchResult);
 
-    auto se = dataset.searchByCriteriaTypeReturn("updated_topic", "updated_node", 3, "updated_type");
+    auto se = dataset->searchByCriteriaTypeReturn("updated_topic", "updated_node", 3, "updated_type");
 
     std::cout << "type " << se.getType();
 
