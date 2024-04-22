@@ -9,7 +9,6 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <vector>
 #include <memory>
-#include <mutex>
 #include <unordered_map>
 #include <arrow/array.h>
 #include <arrow/scalar.h>
@@ -40,6 +39,4 @@ public:
     void printStruct(int index);
 };
 
-
-
-#endif //GOOGOM_TOPIC_PRIVATE_OFFSET_DEFINITION_H
+#endif // GOOGOM_TOPIC_PRIVATE_OFFSET_DEFINITION_H
