@@ -6,6 +6,8 @@
 #include <seastar/core/app-template.hh>
 #include <seastar/core/coroutine.hh>
 
+#include "http/simple_http_server.h"
+
 #include <iostream>
 
 seastar::future<int> test(
@@ -37,6 +39,8 @@ seastar::future<int> test(
 }
 
 int main(int argc, char **argv) {
+    //!!The first stage
+
     seastar::app_template app;
 
     // Example usage
@@ -60,6 +64,8 @@ int main(int argc, char **argv) {
     });
      */
 
+    //!!The second stage
+    /*
     auto dataset = TopicPrivateOffsetDefinition::getInstance();
 
     // Construct TopicPrivateOffsetStructure instances explicitly
@@ -103,4 +109,14 @@ int main(int argc, char **argv) {
     std::cout << "type " << se.getType();
 
     return 0;
+
+     */
+
+    try {
+        boost::asio::io_context ioc;
+        SimpleHttpServer server(ioc, boost::asio::ip::tcp::tcp::endpoint(boost::asio::ip::tcp::tcp::v4(), 8080));
+        ioc.run();
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
 }
