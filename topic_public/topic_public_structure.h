@@ -2,9 +2,8 @@
 // Created by root on 3/31/24.
 //
 
-#ifndef GOOGOM_TOPIC_STRUCTURE_H
-#define GOOGOM_TOPIC_STRUCTURE_H
-
+#ifndef GOOGOM_TOPIC_PUBLIC_STRUCTURE_H
+#define GOOGOM_TOPIC_PUBLIC_STRUCTURE_H
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>
@@ -19,13 +18,11 @@
 #include <iostream>
 #include <utility>
 
-namespace mp = boost::multiprecision;
-
 // Adjusted to use a string for offset to work around Apache Arrow type
 // limitations
-class TopicStructure {
-    mp::uint128_t offset;
-    std::string timestamp;
+class TopicPublicStructure {
+    boost::multiprecision::uint128_t offset;
+    unsigned long long timestamp;
     std::string keys;
     std::string headers;
     // THIS IS THE CUSTOM FLAG. IT WILL SHOW WHAT HAPPENED AND ALSO IN CASE OF
@@ -53,15 +50,30 @@ class TopicStructure {
     }
 
 public:
-    TopicStructure() {}
+    TopicPublicStructure() {}
 
-    TopicStructure(
-      std::string timestamp,
+    TopicPublicStructure(
+      unsigned long long timestamp,
       std::string keys,
       std::string headers,
       int8_t flags,
       const std::vector<uint8_t>& value)
-      : timestamp(std::move(timestamp))
+      : timestamp(timestamp)
+      , keys(std::move(keys))
+      , headers(std::move(headers))
+      , flags(flags)
+      , value(value) {}
+
+
+    TopicPublicStructure(
+      boost::multiprecision::uint128_t offset,
+      unsigned long long timestamp,
+      std::string keys,
+      std::string headers,
+      int8_t flags,
+      const std::vector<uint8_t>& value)
+      : offset(offset)
+      , timestamp(timestamp)
       , keys(std::move(keys))
       , headers(std::move(headers))
       , flags(flags)
@@ -69,24 +81,24 @@ public:
 
     const boost::multiprecision::uint128_t& getOffset() const { return offset; }
     void setOffset(const boost::multiprecision::uint128_t& offset) {
-        TopicStructure::offset = offset;
+        TopicPublicStructure::offset = offset;
     }
-    const std::string& getTimestamp() const { return timestamp; }
-    void setTimestamp(const std::string& timestamp) {
-        TopicStructure::timestamp = timestamp;
+    const unsigned long long& getTimestamp() const { return timestamp; }
+    void setTimestamp(const unsigned long long& timestamp) {
+        TopicPublicStructure::timestamp = timestamp;
     }
     const std::string& getKeys() const { return keys; }
-    void setKeys(const std::string& keys) { TopicStructure::keys = keys; }
+    void setKeys(const std::string& keys) { TopicPublicStructure::keys = keys; }
     const std::string& getHeaders() const { return headers; }
     void setHeaders(const std::string& headers) {
-        TopicStructure::headers = headers;
+        TopicPublicStructure::headers = headers;
     }
     int8_t getFlags() const { return flags; }
-    void setFlags(int8_t flags) { TopicStructure::flags = flags; }
+    void setFlags(int8_t flags) { TopicPublicStructure::flags = flags; }
     const std::vector<uint8_t>& getValue() const { return value; }
     void setValue(const std::vector<uint8_t>& value) {
-        TopicStructure::value = value;
+        TopicPublicStructure::value = value;
     }
 };
 
-#endif // GOOGOM_TOPIC_STRUCTURE_H
+#endif // GOOGOM_TOPIC_PUBLIC_STRUCTURE_H
