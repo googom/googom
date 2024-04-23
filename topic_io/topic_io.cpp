@@ -19,7 +19,7 @@ bool TopicIO::fileExists(const std::string& filePath) {
 }
 
 
-std::vector<TopicStructure> TopicIO::fillVector(const std::string& filePath) {
+std::vector<TopicPublicStructure> TopicIO::fillVector(const std::string& filePath) {
     vectorAllData.clear();
 
     // std::vector<TopicStructure> tempVector{};
@@ -33,7 +33,7 @@ std::vector<TopicStructure> TopicIO::fillVector(const std::string& filePath) {
 
     // Read and deserialize TopicStructure objects
     while (true) {
-        TopicStructure data;
+        TopicPublicStructure data;
 
         try {
             boost::archive::binary_iarchive ia(file);
@@ -62,7 +62,7 @@ std::vector<TopicStructure> TopicIO::fillVector(const std::string& filePath) {
 }
 
 void TopicIO::writeToDisk(
-  const std::string& filePath, const TopicStructure& data) {
+  const std::string& filePath, const TopicPublicStructure& data) {
     if (!sharedFile.is_open()) openSharedFile(filePath);
 
     if (!sharedFile.is_open()) {
@@ -84,7 +84,7 @@ void TopicIO::closeSharedFile() { sharedFile.close(); }
 // TODO dump results to a temp file in case of Panic
 TopicIO::~TopicIO() { closeSharedFile(); }
 
-std::vector<TopicStructure>
+std::vector<TopicPublicStructure>
 TopicIO::readAllRecords(const std::string& filePath) {
    if(vectorAllData.empty()){
        fillVector(filePath);
@@ -92,9 +92,9 @@ TopicIO::readAllRecords(const std::string& filePath) {
    return vectorAllData;
 }
 
-std::vector<TopicStructure>
+std::vector<TopicPublicStructure>
 TopicIO::readRecordsFromHead(const std::string& filePath, int fromHead) {
-    std::vector<TopicStructure> vector{};
+    std::vector<TopicPublicStructure> vector{};
     vector.reserve(fromHead);
 
     if(vectorAllData.empty()){
@@ -116,9 +116,9 @@ TopicIO::readRecordsFromHead(const std::string& filePath, int fromHead) {
     return vector;
 }
 
-std::vector<TopicStructure>
+std::vector<TopicPublicStructure>
 TopicIO::readRecordsFromTail(const std::string& filePath, int fromTail) {
-    std::vector<TopicStructure> vector{};
+    std::vector<TopicPublicStructure> vector{};
     vector.reserve(fromTail);
 
     if(vectorAllData.empty()){
