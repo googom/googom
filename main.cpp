@@ -112,11 +112,24 @@ int main(int argc, char **argv) {
 
      */
 
+
+
+    std::cout<<"num threads"<<1;
+
     try {
         boost::asio::io_context ioc;
-        SimpleHttpServer server(ioc, boost::asio::ip::tcp::tcp::endpoint(boost::asio::ip::tcp::tcp::v4(), 8080));
-        ioc.run();
+        boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard = boost::asio::make_work_guard(ioc);
+
+        SimpleHttpServer server(ioc, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 8080));
+        std::vector<std::thread> threads;
+        for (int i = 0; i < std::max(1u, std::thread::hardware_concurrency()); ++i) {
+            threads.emplace_back([&ioc]() { ioc.run(); });
+        }
+        for (auto& thread : threads) {
+            thread.join();
+        }
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
+    return 0;
 }
