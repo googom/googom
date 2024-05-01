@@ -19,6 +19,9 @@ class rest_server {
     seastar::httpd::http_server_control _server;
     message_store& _store;
 
+    std::string decode64(const std::string &val);
+    std::string encode64(const std::string &val);
+
 public:
     rest_server(message_store& store);
     void start(uint16_t port);
