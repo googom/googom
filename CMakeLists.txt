@@ -45,7 +45,11 @@ set(SOURCES
         http/http_session.h
         http/http_session.cpp
         http/simple_http_server.cpp
-        http/simple_http_server.h)
+        http/simple_http_server.h
+        http/s_http/rest_server.cpp
+        http/s_http/rest_server.h
+        http/s_http/message_store.cpp
+        http/s_http/message_store.h)
 
 add_executable(Googom ${SOURCES})
 

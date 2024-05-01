@@ -8,34 +8,32 @@
 
 #include "http/simple_http_server.h"
 
+#include "http/s_http/rest_server.h"
+#include "http/s_http/message_store.h"
+
 #include <iostream>
 
-seastar::future<int> test(
-        std::shared_ptr<TopicPublicDefinition> topicPublicDefinition,
-        std::vector<uint8_t> binaryValue) {
-    // Simulate inserting multiple data entries
-    for (int i = 0; i < 10; ++i) {
-        co_await seastar::smp::submit_to(i % 8, [&topicPublicDefinition, binaryValue] {
-            TopicPublicMessage topicPublicMessage = {
-                    "{}",
-                    "{}",
-                    binaryValue // Example binary data
-            };
-
-            topicPublicDefinition->insert(topicPublicMessage);
+// TCP Server Handler
+seastar::future<> handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
+    return do_with(std::move(socket), [](auto& socket) {
+        auto in = socket.input();
+        auto out = socket.output();
+        return seastar::repeat([&in, &out] {
+            return in.read().then([&out] (auto buf) {
+                if (buf) {
+                    return out.write(std::move(buf)).then([&out] {
+                        return out.flush();
+                    }).then([] {
+                        return seastar::stop_iteration::no;
+                    });
+                } else {
+                    return make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
+                }
+            });
+        }).finally([&out] {
+            return out.close();
         });
-    }
-
-    std::cout << "Data insertion completed." << std::endl;
-
-    TopicDebugging::printBuffer(
-            topicPublicDefinition->getRecentBuffer(), "recentBuffer");
-    TopicDebugging::printBuffer(
-            topicPublicDefinition->getOldestBuffer(), "oldestBuffer");
-
-    TopicDebugging::printDiskData("data.googom");
-
-    co_return 0;
+    });
 }
 
 int main(int argc, char **argv) {
@@ -43,93 +41,44 @@ int main(int argc, char **argv) {
 
     seastar::app_template app;
 
-    // Example usage
-    const int bufferSize = 5;
+    message_store store;
+    rest_server rest(store);
 
-    std::string text = "Hello World!";
-    std::vector<uint8_t> binaryValue(text.begin(), text.end());
 
-    // TopicDefinition topicDefinition("SampleTopic", 0, bufferSize,
-    // "data.arrow");
+    return app.run(argc, argv, [&app, &rest, &store] {
+        //auto&& config = app.configuration();
+        //uint16_t rest_port = config["rest-port"].as<uint16_t>();
+        //uint16_t tcp_port = config["tcp-port"].as<uint16_t>();
 
-    /*
-     * std::shared_ptr<TopicPublicDefinition> sharedPtr
-      = std::make_shared<TopicPublicDefinition>(
-        "SampleTopic", 0, bufferSize, "data.googom");
+        uint16_t rest_port=8585;
+        uint16_t tcp_port=9595;
 
-    return app.run(argc, argv, [&]() -> seastar::future<int> {
-        auto zero = co_await test(sharedPtr, binaryValue);
+        // Start REST server
+        rest.start(rest_port);
 
-        co_return 0;
+        // Start TCP server
+        seastar::listen_options lo;
+        lo.reuse_address = true;
+        return do_with(seastar::engine().listen(seastar::make_ipv4_address({tcp_port}), lo), [](auto& server) {
+            return seastar::keep_doing([&server] {
+                return server.accept().then([](seastar::accept_result ar) {
+                    // Instead of detaching, manage the future
+                    handle_tcp_connection(std::move(ar.connection), ar.remote_address)
+                            .then_wrapped([](seastar::future<> f) {
+                                try {
+                                    f.get();  // This will throw if the future failed
+                                } catch(const std::exception& e) {
+                                    std::cerr << "Failed to handle TCP connection: " << e.what() << '\n';
+                                }
+                            });
+                });
+            });
+        }).then([rest_port, tcp_port] {
+            std::cout << "REST server listening on port " << rest_port << "\n";
+            std::cout << "TCP server listening on port " << tcp_port << "\n";
+        });
     });
-     */
-
-    //!!The second stage
-    /*
-    auto dataset = TopicPrivateOffsetDefinition::getInstance();
-
-    // Construct TopicPrivateOffsetStructure instances explicitly
-    TopicPrivateOffsetStructure struct1(boost::multiprecision::uint128_t(100), 123456789, "topic1", "node1", 1,
-                                        "type1");
-    TopicPrivateOffsetStructure struct2(boost::multiprecision::uint128_t(200), 987654321, "topic2", "node2", 2,
-                                        "type2");
-
-    // Insert the constructed instances
-    dataset->insert(struct1);
-    dataset->insert(struct2);
-
-    dataset->printAll();
-
-    std::cout << "\n\n";
-
-    // Update an existing instance
-    TopicPrivateOffsetStructure updatedStruct(boost::multiprecision::uint128_t(100), 999999999, "updated_topic",
-                                              "updated_node", 3, "updated_type");
-    dataset->update(0, updatedStruct);
-
-    // Print all instances
-    dataset->printAll();
-
-    // Search for a struct by offset
-    int index = dataset->searchByOffset(boost::multiprecision::uint128_t(100));
-    if (index != -1) {
-        std::cout << "Struct found at index " << index << std::endl;
-    } else {
-        std::cout << "Struct not found" << std::endl;
-    }
-
-    std::cout << "\n\n";
-
-    auto searchResult = dataset->searchByCriteria("updated_topic", "updated_node", 3, "updated_type");
-
-    dataset->printStruct(searchResult);
-
-    auto se = dataset->searchByCriteriaTypeReturn("updated_topic", "updated_node", 3, "updated_type");
-
-    std::cout << "type " << se.getType();
-
-    return 0;
-
-     */
 
 
 
-    std::cout<<"num threads"<<1;
-
-    try {
-        boost::asio::io_context ioc;
-        boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard = boost::asio::make_work_guard(ioc);
-
-        SimpleHttpServer server(ioc, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 8080));
-        std::vector<std::thread> threads;
-        for (int i = 0; i < std::max(1u, std::thread::hardware_concurrency()); ++i) {
-            threads.emplace_back([&ioc]() { ioc.run(); });
-        }
-        for (auto& thread : threads) {
-            thread.join();
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
-    return 0;
 }
