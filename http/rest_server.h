@@ -14,6 +14,7 @@
 
 #include "message_store.h"
 
+// TODO security is missing!
 class rest_server {
     seastar::httpd::http_server_control _server;
     message_store& _store;

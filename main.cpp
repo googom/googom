@@ -6,10 +6,8 @@
 #include <seastar/core/app-template.hh>
 #include <seastar/core/coroutine.hh>
 
-#include "http/simple_http_server.h"
-
-#include "http/s_http/rest_server.h"
-#include "http/s_http/message_store.h"
+#include "http/rest_server.h"
+#include "http/message_store.h"
 
 #include <iostream>
 

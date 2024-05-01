@@ -42,14 +42,10 @@ set(SOURCES
         topic_public/topic_public_message.h
         topic_private/topic_offset/topic_private_offset_definition.cpp
         topic_private/topic_offset/topic_private_offset_definition.h
-        http/http_session.h
-        http/http_session.cpp
-        http/simple_http_server.cpp
-        http/simple_http_server.h
-        http/s_http/rest_server.cpp
-        http/s_http/rest_server.h
-        http/s_http/message_store.cpp
-        http/s_http/message_store.h)
+        http/rest_server.cpp
+        http/rest_server.h
+        http/message_store.cpp
+        http/message_store.h)
 
 add_executable(Googom ${SOURCES})
 
