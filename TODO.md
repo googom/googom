@@ -49,3 +49,7 @@ This information should be kept separately.
 # Transport topic
 I need a process to consume the transport topic. This is an internal topic to be shipped all the followers.
 
+# Partitioner logic
+
+The problem is, how to decide which partition should get the message?
+
