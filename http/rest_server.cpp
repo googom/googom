@@ -4,7 +4,7 @@
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/algorithm/string.hpp>
 
-std::string rest_server::decode64(const std::string &val) {
+std::string RestServer::decode64(const std::string &val) {
     using namespace boost::archive::iterators;
     using It = transform_width<binary_from_base64<std::string::const_iterator>, 8, 6>;
     return boost::algorithm::trim_right_copy_if(std::string(It(std::begin(val)), It(std::end(val))), [](char c) {
@@ -12,17 +12,17 @@ std::string rest_server::decode64(const std::string &val) {
     });
 }
 
-std::string rest_server::encode64(const std::string &val) {
+std::string RestServer::encode64(const std::string &val) {
     using namespace boost::archive::iterators;
     using It = base64_from_binary<transform_width<std::string::const_iterator, 6, 8>>;
     auto tmp = std::string(It(std::begin(val)), It(std::end(val)));
     return tmp.append((3 - val.size() % 3) % 3, '=');
 }
 
-rest_server::rest_server(message_store &store)
+RestServer::RestServer(message_store &store)
         : _store(store) {}
 
-void rest_server::start(uint16_t port) {
+void RestServer::start(uint16_t port) {
     _server.start().then([this, port] {
         setup_routes();
         _server.listen(seastar::socket_address(seastar::ipv4_addr{port}));
@@ -30,12 +30,17 @@ void rest_server::start(uint16_t port) {
     }).or_terminate();
 }
 
-seastar::future<> rest_server::stop() {
+seastar::future<> RestServer::stop() {
     return _server.stop();
 }
 
-
-void rest_server::setup_routes() {
+/*
+ * Required endpoints
+ * message -> send, consume, delete - (Web socket?)
+ * user -> create, disable, delete, list
+ * json configuration -> add, update, list
+ */
+void RestServer::setup_routes() {
     using namespace seastar;
     _server.set_routes([this](httpd::routes &r) {
         r.add(httpd::GET, httpd::url(

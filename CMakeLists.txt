@@ -45,7 +45,10 @@ set(SOURCES
         http/rest_server.cpp
         http/rest_server.h
         http/message_store.cpp
-        http/message_store.h)
+        http/message_store.h
+        topic_private/topic_user/topic_private_user_definition.h
+        topic_private/topic_user/topic_private_user_structure.h
+        topic_private/topic_user/topic_private_user_definition.cpp)
 
 add_executable(Googom ${SOURCES})
 

@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     seastar::app_template app;
 
     message_store store;
-    rest_server rest(store);
+    RestServer rest(store);
 
 
     return app.run(argc, argv, [&app, &rest, &store] {

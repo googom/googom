@@ -14,6 +14,7 @@
 #include <arrow/scalar.h>
 #include <boost/thread/shared_mutex.hpp>
 
+//TODO persistence is missing!!
 class TopicPrivateOffsetDefinition {
     static boost::shared_mutex mutex_;
     static std::shared_ptr<TopicPrivateOffsetDefinition> instance_;

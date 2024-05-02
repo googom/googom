@@ -15,7 +15,7 @@
 #include "message_store.h"
 
 // TODO security is missing!
-class rest_server {
+class RestServer {
     seastar::httpd::http_server_control _server;
     message_store& _store;
 
@@ -23,7 +23,7 @@ class rest_server {
     std::string encode64(const std::string &val);
 
 public:
-    rest_server(message_store& store);
+    RestServer(message_store& store);
     void start(uint16_t port);
     seastar::future<> stop();
     void setup_routes();

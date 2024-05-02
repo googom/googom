@@ -45,3 +45,7 @@ Each of the partition should have a leader and follower nodes.
 
 This information should be kept separately.
 
+
+# Transport topic
+I need a process to consume the transport topic. This is an internal topic to be shipped all the followers.
+
