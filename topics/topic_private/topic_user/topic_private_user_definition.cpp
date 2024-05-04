@@ -3,7 +3,7 @@
 #include <algorithm>  // for std::find_if
 #include <iostream>   // for std::cout
 #include <boost/thread/locks.hpp>  // for boost::unique_lock and boost::shared_lock
-#include "../../utilities/utils.h"
+#include "../../../utilities/utils.h"
 
 // Initialize static members
 boost::shared_mutex TopicPrivateUserDefinition::mutex_;

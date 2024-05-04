@@ -1,13 +1,14 @@
-#include "topic_debugging/topic_debugging.h"
-#include "topic_public/topic_public_definition.h"
-#include "topic_public/topic_public_message.h"
-#include "topic_private/topic_offset/topic_private_offset_definition.h"
+#include "topics/topic_debugging/topic_debugging.h"
+#include "topics/topic_public/topic_public_definition.h"
+#include "topics/topic_public/topic_public_message.h"
+#include "topics/topic_private/topic_offset/topic_private_offset_definition.h"
 
 #include <seastar/core/app-template.hh>
 #include <seastar/core/coroutine.hh>
 
-#include "http/rest_server.h"
-#include "http/message_store.h"
+#include "communication/http/rest_server.h"
+#include "communication/http/message_store.h"
+#include "managers/config_manager.h"
 
 #include <iostream>
 
@@ -42,6 +43,7 @@ int main(int argc, char **argv) {
     message_store store;
     RestServer rest(store);
 
+    ConfigManager::setNodeId("thisNode");
 
     return app.run(argc, argv, [&app, &rest, &store] {
         //auto&& config = app.configuration();

@@ -110,3 +110,25 @@ void TopicPrivateOffsetDefinition::printStruct(int index) {
         printStruct(privateOffsetStructure[index]);
     }
 }
+
+std::vector<TopicPrivateOffsetStructure>
+TopicPrivateOffsetDefinition::searchByCriteriaVectorTypeReturn(const std::string &topic, const std::string &nodeId,const std::string &type) {
+
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    std::vector<TopicPrivateOffsetStructure> result;
+
+    auto it = std::find_if(privateOffsetStructure.begin(), privateOffsetStructure.end(),
+                           [&topic, &nodeId, &type](const TopicPrivateOffsetStructure &entry) {
+                               return entry.getTopic() == topic && entry.getNodeId() == nodeId && entry.getType() == type;
+                           });
+
+    while (it != privateOffsetStructure.end()) {
+        result.push_back(*it);
+        it = std::find_if(++it, privateOffsetStructure.end(),
+                          [&topic, &type](const TopicPrivateOffsetStructure &entry) {
+                              return entry.getTopic() == topic && entry.getType() == type;
+                          });
+    }
+
+    return result;
+}

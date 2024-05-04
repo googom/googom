@@ -25,7 +25,7 @@ class TopicPrivateOffsetStructure {
     boost::multiprecision::uint128_t offset;
     unsigned long long timestamp;
     std::string topic;
-    std::string nodeId;
+    std::string nodeId; //leader node
     uint8_t partition;
     //START and END should be different entries
     std::string type;

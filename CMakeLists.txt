@@ -27,28 +27,33 @@ find_package(Boost REQUIRED COMPONENTS serialization)
 
 set(SOURCES
         main.cpp
-        topic_public/topic_public_definition.cpp
-        topic_public/topic_public_definition.h
-        topic_public/topic_public_structure.h
-        topic_io/topic_io.cpp
-        topic_io/topic_io.h
-        topic_debugging/topic_debugging.cpp
-        topic_debugging/topic_debugging.h
+        topics/topic_public/topic_public_definition.cpp
+        topics/topic_public/topic_public_definition.h
+        topics/topic_public/topic_public_structure.h
+        topics/topic_io/topic_io.cpp
+        topics/topic_io/topic_io.h
+        topics/topic_debugging/topic_debugging.cpp
+        topics/topic_debugging/topic_debugging.h
         utilities/print_utilities.cpp
         utilities/print_utilities.h
-        topic_private/topic_offset/topic_private_offset_structure.h
+        topics/topic_private/topic_offset/topic_private_offset_structure.h
         utilities/utils.cpp
         utilities/utils.h
-        topic_public/topic_public_message.h
-        topic_private/topic_offset/topic_private_offset_definition.cpp
-        topic_private/topic_offset/topic_private_offset_definition.h
-        http/rest_server.cpp
-        http/rest_server.h
-        http/message_store.cpp
-        http/message_store.h
-        topic_private/topic_user/topic_private_user_definition.h
-        topic_private/topic_user/topic_private_user_structure.h
-        topic_private/topic_user/topic_private_user_definition.cpp)
+        topics/topic_public/topic_public_message.h
+        topics/topic_private/topic_offset/topic_private_offset_definition.cpp
+        topics/topic_private/topic_offset/topic_private_offset_definition.h
+        communication/http/rest_server.cpp
+        communication/http/rest_server.h
+        communication/http/message_store.cpp
+        communication/http/message_store.h
+        topics/topic_private/topic_user/topic_private_user_definition.h
+        topics/topic_private/topic_user/topic_private_user_structure.h
+        topics/topic_private/topic_user/topic_private_user_definition.cpp
+        managers/topic_manager.cpp
+        managers/topic_manager.cpp
+        managers/topic_manager.h
+        managers/config_manager.cpp
+        managers/config_manager.h)
 
 add_executable(Googom ${SOURCES})
 
