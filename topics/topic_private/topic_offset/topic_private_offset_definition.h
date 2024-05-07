@@ -36,6 +36,7 @@ public:
     TopicPrivateOffsetStructure searchByCriteriaTypeReturn(const std::string &topic, const std::string &nodeId, uint8_t partition, const std::string &type);
     std::vector<TopicPrivateOffsetStructure> searchByCriteriaVectorTypeReturn(const std::string &topic,  const std::string &nodeId, const std::string &type);
     int searchByCriteria(const std::string &topic, const std::string &nodeId, uint8_t partition, const std::string &type);
+    std::vector<TopicPrivateOffsetStructure> searchByNameTypeReturn(const std::string &topic);
     void printAll();
     void printStruct(const TopicPrivateOffsetStructure& p_struct);
     void printStruct(int index);

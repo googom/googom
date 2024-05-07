@@ -9,16 +9,17 @@
 #include "communication/http/rest_server.h"
 #include "communication/http/message_store.h"
 #include "managers/config_manager.h"
+#include "managers/initialization_manager.h"
 
 #include <iostream>
 
 // TCP Server Handler
 seastar::future<> handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
-    return do_with(std::move(socket), [](auto& socket) {
+    return do_with(std::move(socket), [](auto &socket) {
         auto in = socket.input();
         auto out = socket.output();
         return seastar::repeat([&in, &out] {
-            return in.read().then([&out] (auto buf) {
+            return in.read().then([&out](auto buf) {
                 if (buf) {
                     return out.write(std::move(buf)).then([&out] {
                         return out.flush();
@@ -40,26 +41,32 @@ int main(int argc, char **argv) {
 
     seastar::app_template app;
 
+    app.add_options()
+            ("config,c", boost::program_options::value<std::string>(), "this is for tcp port");
+
     message_store store;
     RestServer rest(store);
 
-    ConfigManager::setNodeId("thisNode");
 
     return app.run(argc, argv, [&app, &rest, &store] {
-        //auto&& config = app.configuration();
-        //uint16_t rest_port = config["rest-port"].as<uint16_t>();
-        //uint16_t tcp_port = config["tcp-port"].as<uint16_t>();
 
-        uint16_t rest_port=8585;
-        uint16_t tcp_port=9595;
+        auto &args = app.configuration();
+        auto configFile = args["config"].as<std::string>();
+
+
+        InitializationManager initializationManager = InitializationManager();
+        initializationManager.initialize(configFile);
+
+        uint16_t restPort = ConfigManager::getInstance()->getWebPort();
+        uint16_t tcpPort = ConfigManager::getInstance()->getTcpPort();
 
         // Start REST server
-        rest.start(rest_port);
+        rest.start(restPort);
 
         // Start TCP server
         seastar::listen_options lo;
         lo.reuse_address = true;
-        return do_with(seastar::engine().listen(seastar::make_ipv4_address({tcp_port}), lo), [](auto& server) {
+        return do_with(seastar::engine().listen(seastar::make_ipv4_address({tcpPort}), lo), [](auto &server) {
             return seastar::keep_doing([&server] {
                 return server.accept().then([](seastar::accept_result ar) {
                     // Instead of detaching, manage the future
@@ -67,18 +74,17 @@ int main(int argc, char **argv) {
                             .then_wrapped([](seastar::future<> f) {
                                 try {
                                     f.get();  // This will throw if the future failed
-                                } catch(const std::exception& e) {
+                                } catch (const std::exception &e) {
                                     std::cerr << "Failed to handle TCP connection: " << e.what() << '\n';
                                 }
                             });
                 });
             });
-        }).then([rest_port, tcp_port] {
-            std::cout << "REST server listening on port " << rest_port << "\n";
-            std::cout << "TCP server listening on port " << tcp_port << "\n";
+        }).then([restPort, tcpPort] {
+            std::cout << "REST server listening on port " << restPort << "\n";
+            std::cout << "TCP server listening on port " << tcpPort << "\n";
         });
     });
-
 
 
 }

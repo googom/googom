@@ -132,3 +132,23 @@ TopicPrivateOffsetDefinition::searchByCriteriaVectorTypeReturn(const std::string
 
     return result;
 }
+
+std::vector<TopicPrivateOffsetStructure> TopicPrivateOffsetDefinition::searchByNameTypeReturn(const std::string &topic) {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    std::vector<TopicPrivateOffsetStructure> result;
+
+    auto it = std::find_if(privateOffsetStructure.begin(), privateOffsetStructure.end(),
+                           [&topic](const TopicPrivateOffsetStructure &entry) {
+                               return entry.getTopic() == topic;
+                           });
+
+    while (it != privateOffsetStructure.end()) {
+        result.push_back(*it);
+        it = std::find_if(++it, privateOffsetStructure.end(),
+                          [&topic](const TopicPrivateOffsetStructure &entry) {
+                              return entry.getTopic() == topic;
+                          });
+    }
+
+    return result;
+}

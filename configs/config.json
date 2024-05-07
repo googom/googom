@@ -1,0 +1,14 @@
+{
+  "Configuration": {
+    "nodeId": "Node123",
+    "defaultPartitionCount": 1,
+    "defaultReplicationCount": 1,
+    "defaultISRCount": 1
+  },
+  "Web": {
+    "port": 8598
+  },
+  "Tcp": {
+    "port": 9599
+  }
+}

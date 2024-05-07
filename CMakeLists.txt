@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.27)
 project(Googom)
 
+file(COPY ${CMAKE_SOURCE_DIR}/configs DESTINATION ${CMAKE_BINARY_DIR})
+
 include(ExternalProject)  # Include the ExternalProject module
 
 option(ARROW_LINK_SHARED "Link to the Arrow shared library" ON)
@@ -53,7 +55,9 @@ set(SOURCES
         managers/topic_manager.cpp
         managers/topic_manager.h
         managers/config_manager.cpp
-        managers/config_manager.h)
+        managers/config_manager.h
+        managers/initialization_manager.cpp
+        managers/initialization_manager.h)
 
 add_executable(Googom ${SOURCES})
 

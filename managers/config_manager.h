@@ -5,36 +5,61 @@
 #ifndef GOOGOM_CONFIG_MANAGER_H
 #define GOOGOM_CONFIG_MANAGER_H
 
-#include <iostream>
-
 // Configuration should work both ways.
 // On the first load of application, data should be loaded to the topic from the file
 // Once there is a change coming from the application via API, these changes should be written to all instances
 
-class ConfigManager{
-    static std::string nodeId;
-    static int defaultPartitionCount;
-    static int defaultReplicationCount;
-    static int defaultISRCount;
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <iostream>
+#include <sstream>
 
+class ConfigManager {
+    static ConfigManager* instance;
+    std::string nodeId;
+    int defaultPartitionCount;
+    int defaultReplicationCount;
+    int defaultISRCount;
+    int webPort;
+    int tcpPort;
+
+    ConfigManager(); // Private constructor for singleton
 
 public:
-    static std::string &getNodeId();
+    // Disable copy constructor and assignment operator
+    ConfigManager(const ConfigManager&) = delete;
+    ConfigManager& operator=(const ConfigManager&) = delete;
 
-    static void setNodeId(const std::string &nodeId);
+    static ConfigManager* getInstance(); // Singleton access method
 
-    static int getDefaultPartitionCount();
+    // Getters and setters
+    std::string getNodeId() const;
+    void setNodeId(const std::string& nodeId);
 
-    static void setDefaultPartitionCount(int defaultPartitionCount);
+    int getDefaultPartitionCount() const;
+    void setDefaultPartitionCount(int defaultPartitionCount);
 
-    static int getDefaultReplicationCount();
+    int getDefaultReplicationCount() const;
+    void setDefaultReplicationCount(int defaultReplicationCount);
 
-    static void setDefaultReplicationCount(int defaultReplicationCount);
+    int getDefaultIsrCount() const;
+    void setDefaultIsrCount(int defaultIsrCount);
 
-    static int getDefaultIsrCount();
+    int getWebPort() const;
 
-    static void setDefaultIsrCount(int defaultIsrCount);
+    void setWebPort(int webPort);
 
+    int getTcpPort() const;
+
+    void setTcpPort(int tcpPort);
+
+    // File I/O
+    void loadConfig(const std::string& filename);
+    void saveConfig(const std::string& filename);
 };
 
 #endif //GOOGOM_CONFIG_MANAGER_H
