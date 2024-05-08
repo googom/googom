@@ -16,7 +16,10 @@ public:
 
     static boost::multiprecision::uint128_t getLatestOffsetWithRoundRobin(const std::string &topicName);
 
-    static bool createTopic(const std::string &topicName, int partitionCount, int replication, int isrCount) ;
+    static bool createTopic(const std::string &topicName,
+                                   int partitionCount = ConfigManager::getInstance()->getDefaultPartitionCount(),
+                                   int replication = ConfigManager::getInstance()->getDefaultReplicationCount(),
+                                   int isrCount = ConfigManager::getInstance()->getDefaultIsrCount());
 
     static bool checkTopicExists(const std::string &topicName);
 };

@@ -1,8 +1,12 @@
 #include "rest_server.h"
+#include "../../topics/topic_private/topic_user/topic_private_user_definition.h"
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <sstream>
 
 std::string RestServer::decode64(const std::string &val) {
     using namespace boost::archive::iterators;
@@ -69,6 +73,8 @@ void RestServer::setup_routes() {
                     auto username = credentials.substr(0, separator_pos);
                     auto password = credentials.substr(separator_pos + 1);
 
+                    //TODO check auth
+
                     try {
                         auto id_str = req->param.at("id");
                         //THIS WAS NEEDED TO CLEAR / char
@@ -124,5 +130,73 @@ void RestServer::setup_routes() {
                       return seastar::make_ready_future<std::unique_ptr<http::reply>>(std::move(rep));
                   }
               }, "json"));
+
+        //USER
+        r.add(httpd::POST, httpd::url("/user"),
+              new httpd::function_handler([this](std::unique_ptr<http::request> req, std::unique_ptr<http::reply> rep) {
+                  try {
+                      // Read and parse JSON
+                      std::stringstream json_stream(req->content);
+                      boost::property_tree::ptree pt;
+                      boost::property_tree::read_json(json_stream, pt);
+
+                      std::string username = pt.get<std::string>("username");
+                      std::string password = pt.get<std::string>("password");
+                      std::string email = pt.get<std::string>("email");
+
+                      auto user= TopicPrivateUserDefinition::getInstance()->insert(username,password,email);
+
+                      rep->write_body("json", user.to_json());
+                  } catch (const std::exception& e) {
+                      // Handle JSON parsing errors
+                      boost::property_tree::ptree error;
+                      error.put("error", e.what());
+                      std::ostringstream error_stream;
+                      boost::property_tree::write_json(error_stream, error);
+
+                      rep->set_status(http::reply::status_type::bad_request);
+                      rep->write_body("json", error_stream.str());
+                  }
+
+                  rep->done("json");
+                  return seastar::make_ready_future<std::unique_ptr<http::reply>>(std::move(rep));
+              }, "json"));
+
+        r.add(httpd::GET, httpd::url("/users"),
+              new httpd::function_handler([this](std::unique_ptr<http::request> req, std::unique_ptr<http::reply> rep) {
+                  try {
+                      // Fetch all users
+                      const std::vector<TopicPrivateUserStructure>& users = TopicPrivateUserDefinition::getInstance()-> getAllUsers();
+
+                      // Create JSON array
+                      boost::property_tree::ptree users_array;
+                      for (const auto& user : users) {
+                          boost::property_tree::ptree user_ptree = user.to_ptree();
+                          users_array.push_back(std::make_pair("", user_ptree));
+                      }
+
+                      // Create response JSON object
+                      boost::property_tree::ptree response;
+                      response.add_child("users", users_array);
+
+                      std::ostringstream response_stream;
+                      boost::property_tree::write_json(response_stream, response);
+
+                      rep->write_body("json", response_stream.str());
+                  } catch (const std::exception& e) {
+                      // Handle errors
+                      boost::property_tree::ptree error;
+                      error.put("error", e.what());
+                      std::ostringstream error_stream;
+                      boost::property_tree::write_json(error_stream, error);
+
+                      rep->set_status(http::reply::status_type::internal_server_error);
+                      rep->write_body("json", error_stream.str());
+                  }
+
+                  rep->done("json");
+                  return seastar::make_ready_future<std::unique_ptr<http::reply>>(std::move(rep));
+              }, "json"));
+
     });
 }

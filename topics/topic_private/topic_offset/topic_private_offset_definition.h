@@ -40,6 +40,8 @@ public:
     void printAll();
     void printStruct(const TopicPrivateOffsetStructure& p_struct);
     void printStruct(int index);
+    void updateOffset(const boost::multiprecision::uint128_t &offset,
+                                                    const boost::multiprecision::uint128_t &newOffset);
 };
 
 #endif // GOOGOM_TOPIC_PRIVATE_OFFSET_DEFINITION_H

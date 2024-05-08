@@ -33,6 +33,16 @@ void TopicPrivateOffsetDefinition::update(int index, const TopicPrivateOffsetStr
     }
 }
 
+void TopicPrivateOffsetDefinition::updateOffset(const boost::multiprecision::uint128_t &oldOffset,
+                                                const boost::multiprecision::uint128_t &newOffset) {
+    boost::unique_lock<boost::shared_mutex> lock(mutex_);
+    auto index = TopicPrivateOffsetDefinition::getInstance()->searchByOffset(oldOffset);
+    auto structure = privateOffsetStructure[index];
+    structure.setOffset(newOffset);
+    TopicPrivateOffsetDefinition::getInstance()->update(index, structure);
+}
+
+
 // Search for a structure by offset and return its index - Read operation
 int TopicPrivateOffsetDefinition::searchByOffset(boost::multiprecision::uint128_t offset) {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
@@ -66,7 +76,9 @@ TopicPrivateOffsetStructure TopicPrivateOffsetDefinition::searchByCriteriaTypeRe
     return {};  // or throw an exception based on your error handling strategy
 }
 
-int TopicPrivateOffsetDefinition::searchByCriteria(const std::string &topic, const std::string &nodeId, uint8_t partition, const std::string &type) {
+int
+TopicPrivateOffsetDefinition::searchByCriteria(const std::string &topic, const std::string &nodeId, uint8_t partition,
+                                               const std::string &type) {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
     auto it = std::find_if(privateOffsetStructure.begin(), privateOffsetStructure.end(),
                            [&topic, &nodeId, partition, &type](const TopicPrivateOffsetStructure &entry) {
@@ -87,14 +99,14 @@ void TopicPrivateOffsetDefinition::printAll() {
     if (privateOffsetStructure.empty()) {
         std::cout << "No entries available." << std::endl;
     } else {
-        for (const auto& structure : privateOffsetStructure) {
+        for (const auto &structure: privateOffsetStructure) {
             printStruct(structure);
         }
     }
 }
 
 // Print the details of a single TopicPrivateOffsetStructure - Read operation
-void TopicPrivateOffsetDefinition::printStruct(const TopicPrivateOffsetStructure& p_struct) {
+void TopicPrivateOffsetDefinition::printStruct(const TopicPrivateOffsetStructure &p_struct) {
     std::cout << "Offset: " << p_struct.getOffset() << ", "
               << "Timestamp: " << p_struct.getTimestamp() << ", "
               << "Topic: " << p_struct.getTopic() << ", "
@@ -112,14 +124,16 @@ void TopicPrivateOffsetDefinition::printStruct(int index) {
 }
 
 std::vector<TopicPrivateOffsetStructure>
-TopicPrivateOffsetDefinition::searchByCriteriaVectorTypeReturn(const std::string &topic, const std::string &nodeId,const std::string &type) {
+TopicPrivateOffsetDefinition::searchByCriteriaVectorTypeReturn(const std::string &topic, const std::string &nodeId,
+                                                               const std::string &type) {
 
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
     std::vector<TopicPrivateOffsetStructure> result;
 
     auto it = std::find_if(privateOffsetStructure.begin(), privateOffsetStructure.end(),
                            [&topic, &nodeId, &type](const TopicPrivateOffsetStructure &entry) {
-                               return entry.getTopic() == topic && entry.getNodeId() == nodeId && entry.getType() == type;
+                               return entry.getTopic() == topic && entry.getNodeId() == nodeId &&
+                                      entry.getType() == type;
                            });
 
     while (it != privateOffsetStructure.end()) {
@@ -133,7 +147,8 @@ TopicPrivateOffsetDefinition::searchByCriteriaVectorTypeReturn(const std::string
     return result;
 }
 
-std::vector<TopicPrivateOffsetStructure> TopicPrivateOffsetDefinition::searchByNameTypeReturn(const std::string &topic) {
+std::vector<TopicPrivateOffsetStructure>
+TopicPrivateOffsetDefinition::searchByNameTypeReturn(const std::string &topic) {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
     std::vector<TopicPrivateOffsetStructure> result;
 

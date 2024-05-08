@@ -77,7 +77,7 @@ void ConfigManager::saveConfig(const std::string& filename) {
         pt.put("Web.port", webPort);
         pt.put("Tcp.port", tcpPort);
 
-        boost::property_tree::write_json(filename, pt); // Or use write_ini for INI files
+        boost::property_tree::write_json(filename, pt);
     } catch (const boost::property_tree::json_parser_error &e) {
         std::cerr << "Error writing config file: " << e.what() << std::endl;
     }

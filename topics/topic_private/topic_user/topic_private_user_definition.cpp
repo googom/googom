@@ -1,3 +1,7 @@
+//
+// Created by root on 5/8/24.
+//
+
 #include "topic_private_user_definition.h"
 
 #include <algorithm>  // for std::find_if
@@ -19,18 +23,22 @@ std::shared_ptr<TopicPrivateUserDefinition> TopicPrivateUserDefinition::getInsta
 }
 
 // Insert a new structure - Write operation
-void TopicPrivateUserDefinition::insert(const std::string &username, const std::string &password,const std::string &email) {
+TopicPrivateUserStructure TopicPrivateUserDefinition::insert(const std::string &username, const std::string &password,const std::string &email) {
 
 
     TopicPrivateUserStructure new_struct;
     new_struct.setTimestamp(Utils::getCurrentMicroseconds());
-    // TODO offset and timestamp
+    boost::multiprecision::uint128_t offset=TopicManager::getLatestOffsetWithRoundRobin("__user");
+    new_struct.setOffset(offset);
+    //TODO check if user exists
     new_struct.setUsername(username);
+    //TODO PASSWORD MD5
     new_struct.setPassword(password);
     new_struct.setEmail(email);
     new_struct.setDeleted(false);
     boost::unique_lock<boost::shared_mutex> lock(mutex_);
     privateUserStructure.push_back(new_struct);
+    return new_struct;
 }
 
 // Update an existing structure by index - Write operation
@@ -80,7 +88,7 @@ int TopicPrivateUserDefinition::searchByCriteria(const std::string &username,
     auto it = std::find_if(privateUserStructure.begin(), privateUserStructure.end(),
                            [&username, email ](const TopicPrivateUserStructure &entry) {
                                return (entry.getUsername() == username ||
-                                      entry.getEmail() == email);
+                                       entry.getEmail() == email);
                            });
 
     if (it != privateUserStructure.end()) {
@@ -119,3 +127,10 @@ void TopicPrivateUserDefinition::printStruct(int index) {
         printStruct(privateUserStructure[index]);
     }
 }
+
+std::vector<TopicPrivateUserStructure> TopicPrivateUserDefinition::getAllUsers() {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    return privateUserStructure;
+
+}
+

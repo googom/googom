@@ -48,16 +48,16 @@ set(SOURCES
         communication/http/rest_server.h
         communication/http/message_store.cpp
         communication/http/message_store.h
-        topics/topic_private/topic_user/topic_private_user_definition.h
-        topics/topic_private/topic_user/topic_private_user_structure.h
-        topics/topic_private/topic_user/topic_private_user_definition.cpp
         managers/topic_manager.cpp
         managers/topic_manager.cpp
         managers/topic_manager.h
         managers/config_manager.cpp
         managers/config_manager.h
         managers/initialization_manager.cpp
-        managers/initialization_manager.h)
+        managers/initialization_manager.h
+        topics/topic_private/topic_user/topic_private_user_structure.h
+        topics/topic_private/topic_user/topic_private_user_definition.cpp
+        topics/topic_private/topic_user/topic_private_user_definition.h)
 
 add_executable(Googom ${SOURCES})
 
