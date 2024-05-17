@@ -33,22 +33,14 @@ void TopicPrivateOffsetDefinition::update(int index, const TopicPrivateOffsetStr
     }
 }
 
-void TopicPrivateOffsetDefinition::updateOffset(const boost::multiprecision::uint128_t &oldOffset,
-                                                const boost::multiprecision::uint128_t &newOffset) {
-    boost::unique_lock<boost::shared_mutex> lock(mutex_);
-    auto index = TopicPrivateOffsetDefinition::getInstance()->searchByOffset(oldOffset);
-    auto structure = privateOffsetStructure[index];
-    structure.setOffset(newOffset);
-    TopicPrivateOffsetDefinition::getInstance()->update(index, structure);
-}
-
 
 // Search for a structure by offset and return its index - Read operation
-int TopicPrivateOffsetDefinition::searchByOffset(boost::multiprecision::uint128_t offset) {
+int TopicPrivateOffsetDefinition::searchForIndex(const TopicPrivateOffsetStructure &topicPrivateOffsetStructure) {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
     auto it = std::find_if(privateOffsetStructure.begin(), privateOffsetStructure.end(),
-                           [&offset](const TopicPrivateOffsetStructure &entry) {
-                               return entry.getOffset() == offset;
+                           [&topicPrivateOffsetStructure](const TopicPrivateOffsetStructure &entry) {
+                               return entry.getTopic() == topicPrivateOffsetStructure.getTopic() && entry.getNodeId() == topicPrivateOffsetStructure.getNodeId() &&
+                                      entry.getPartition() == topicPrivateOffsetStructure.getPartition() && entry.getType() == topicPrivateOffsetStructure.getType();
                            });
 
     if (it != privateOffsetStructure.end()) {

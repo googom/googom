@@ -19,7 +19,7 @@ bool TopicManager::checkTopicExists(const std::string &topicName) {
 }
 
 
-boost::multiprecision::uint128_t TopicManager::getLatestOffsetWithRoundRobin(const std::string &topicName) {
+boost::multiprecision::uint128_t TopicManager::getNewestOffsetWithRoundRobin(const std::string &topicName) {
     auto topicPrivateOffsetDefinition = TopicPrivateOffsetDefinition::getInstance();
     auto topicPrivateOffsetDefinitionVector = topicPrivateOffsetDefinition->searchByCriteriaVectorTypeReturn(topicName,
                                                                                                              nodeId,
@@ -34,26 +34,17 @@ boost::multiprecision::uint128_t TopicManager::getLatestOffsetWithRoundRobin(con
     // TODO THIS IS STILL WRONG
     // NEEDS TO BE REVISITED ONCE THERE IS A BETTER APPROACH FOR multinode communication!
 
-    // Find the largest offset using std::max_element
-    auto maxOffsetIterator = std::max_element(topicPrivateOffsetDefinitionVector.begin(),
-                                              topicPrivateOffsetDefinitionVector.end(),
-                                              [](const TopicPrivateOffsetStructure &a,
-                                                 const TopicPrivateOffsetStructure &b) {
-                                                  return a.getOffset() < b.getOffset();
-                                              });
+    // Since new entries are appended, the last element will have the largest offset
+    auto topicPrivateOffsetDefinitionValue = topicPrivateOffsetDefinitionVector.back();
+    boost::multiprecision::uint128_t lastOffset = topicPrivateOffsetDefinitionValue.getOffset() + 1;
+    topicPrivateOffsetDefinitionValue.setOffset(lastOffset);
 
-    // Check if the iterator is valid and dereference safely
-    if (maxOffsetIterator != topicPrivateOffsetDefinitionVector.end()) {
-        // Return the largest offset + 1
-        auto oldOffset = maxOffsetIterator->getOffset();
-        auto newOffset = oldOffset+1;
-        TopicPrivateOffsetDefinition::getInstance()->updateOffset(oldOffset, newOffset);
+    //UPDATE THE OFFSET!!!!
+    auto index = topicPrivateOffsetDefinition->searchForIndex(topicPrivateOffsetDefinitionValue);
+    topicPrivateOffsetDefinition->update(index, topicPrivateOffsetDefinitionValue);
 
-        return newOffset;
-    } else {
-        // This case shouldn't happen, but for safety, return 1
-        return 0;
-    }
+    // Return the latest offset + 1
+    return lastOffset;
 }
 
 

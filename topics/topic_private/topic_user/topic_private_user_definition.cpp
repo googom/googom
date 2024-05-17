@@ -28,7 +28,7 @@ TopicPrivateUserStructure TopicPrivateUserDefinition::insert(const std::string &
 
     TopicPrivateUserStructure new_struct;
     new_struct.setTimestamp(Utils::getCurrentMicroseconds());
-    boost::multiprecision::uint128_t offset=TopicManager::getLatestOffsetWithRoundRobin("__user");
+    boost::multiprecision::uint128_t offset=TopicManager::getNewestOffsetWithRoundRobin("__user");
     new_struct.setOffset(offset);
     //TODO check if user exists
     new_struct.setUsername(username);

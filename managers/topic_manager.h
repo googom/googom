@@ -14,7 +14,7 @@ class TopicManager {
     static std::string nodeId;
 public:
 
-    static boost::multiprecision::uint128_t getLatestOffsetWithRoundRobin(const std::string &topicName);
+    static boost::multiprecision::uint128_t getNewestOffsetWithRoundRobin(const std::string &topicName);
 
     static bool createTopic(const std::string &topicName,
                                    int partitionCount = ConfigManager::getInstance()->getDefaultPartitionCount(),
