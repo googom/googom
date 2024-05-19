@@ -6,7 +6,7 @@ Googom is a robust single-stop data platform utilizing Kappa architecture for re
 
 ## Key Components
 
-1. **HTTP Server (Boost.Beast)** - Manages JSON formatted data interactions via HTTP protocols.
+1. **HTTP Server** - Manages JSON formatted data interactions via HTTP protocols.
 2. **TCP Server** - Handles binary data transfers over TCP, utilizing Boost libraries for optimal performance.
 3. **Data Writer** - Writes and validates data against schemas, storing it in memory for fast access.
 4. **Data Dumper** - Executes periodic data dumps to disk, based on configurable intervals, to ensure data persistence.

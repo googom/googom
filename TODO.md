@@ -53,3 +53,7 @@ I need a process to consume the transport topic. This is an internal topic to be
 
 The problem is, how to decide which partition should get the message?
 
+# Warning messages at the startup
+This solved the one message
+`echo 88208 | tee /proc/sys/fs/aio-max-nr`
+The other message needs numa configured

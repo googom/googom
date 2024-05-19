@@ -5,6 +5,7 @@
 
 #include <seastar/core/app-template.hh>
 #include <seastar/core/coroutine.hh>
+#include <seastar/core/temporary_buffer.hh>
 
 #include "communication/http/rest_server.h"
 #include "communication/http/message_store.h"
@@ -15,26 +16,40 @@
 
 // TCP Server Handler
 seastar::future<> handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
-    return do_with(std::move(socket), [](auto &socket) {
+    return seastar::do_with(std::move(socket), [](auto& socket) {
         auto in = socket.input();
         auto out = socket.output();
-        return seastar::repeat([&in, &out] {
-            return in.read().then([&out](auto buf) {
-                if (buf) {
-                    return out.write(std::move(buf)).then([&out] {
-                        return out.flush();
-                    }).then([] {
-                        return seastar::stop_iteration::no;
-                    });
-                } else {
-                    return make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
+
+        // Helper function to safely read and prepend "hello " to messages
+        auto safely_read_and_modify = [&in]() -> seastar::future<seastar::temporary_buffer<char>> {
+            return in.read().then([](seastar::temporary_buffer<char> buf) {
+                if (!buf) {
+                    throw std::runtime_error("End of stream");
                 }
+                std::string message = "hello " + std::string(buf.get(), buf.size());
+                // Use the correct constructor for temporary_buffer
+                return seastar::temporary_buffer<char>(message.data(), message.size());
+            });
+        };
+
+        return seastar::repeat([&in, &out, &safely_read_and_modify] {
+            return safely_read_and_modify().then([&out](seastar::temporary_buffer<char> buf) {
+                return out.write(std::move(buf)).then([&out] {
+                    return out.flush();
+                }).then([] {
+                    return seastar::stop_iteration::no;
+                });
+            }).handle_exception([&out](std::exception_ptr e) {
+                // Log error and stop repeating if there's an exception
+                std::cout << "Error handling TCP connection: " << e << std::endl;
+                return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
             });
         }).finally([&out] {
             return out.close();
         });
     });
 }
+
 
 int main(int argc, char **argv) {
     //!!The first stage
@@ -66,11 +81,15 @@ int main(int argc, char **argv) {
         // Start TCP server
         seastar::listen_options lo;
         lo.reuse_address = true;
-        return do_with(seastar::engine().listen(seastar::make_ipv4_address({tcpPort}), lo), [](auto &server) {
+        auto listen_addr = seastar::make_ipv4_address({tcpPort});
+
+        auto &engine = seastar::engine();
+        return do_with(engine.listen(listen_addr, lo), [&](auto &server) {
+            std::cout << "TCP server listening on port " << tcpPort << "\n";
             return seastar::keep_doing([&server] {
                 return server.accept().then([](seastar::accept_result ar) {
-                    // Instead of detaching, manage the future
-                    handle_tcp_connection(std::move(ar.connection), ar.remote_address)
+                    // Handle TCP connection
+                    return handle_tcp_connection(std::move(ar.connection), ar.remote_address)
                             .then_wrapped([](seastar::future<> f) {
                                 try {
                                     f.get();  // This will throw if the future failed
@@ -79,11 +98,13 @@ int main(int argc, char **argv) {
                                 }
                             });
                 });
+            }).finally([&server, &tcpPort] {
+                server.abort_accept();
+                std::cout << "Closing TCP server on port " << tcpPort << "\n";
             });
-        }).then([restPort, tcpPort] {
-            std::cout << "REST server listening on port " << restPort << "\n";
-            std::cout << "TCP server listening on port " << tcpPort << "\n";
         });
+
+
     });
 
 
