@@ -24,7 +24,7 @@ public:
     int next_id = 0;
 
     int store_message(const std::string& msg) {
-        int id = next_id++;
+        unsigned int id = next_id++;
         messages[id] = msg;
         return id;
     }
