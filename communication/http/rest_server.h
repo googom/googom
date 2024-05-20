@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <seastar/json/json_elements.hh>
 
-#include "message_store.h"
+#include "../temp_store/message_store.h"
 
 // TODO security is missing!
 class RestServer {

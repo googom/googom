@@ -46,8 +46,8 @@ set(SOURCES
         topics/topic_private/topic_offset/topic_private_offset_definition.h
         communication/http/rest_server.cpp
         communication/http/rest_server.h
-        communication/http/message_store.cpp
-        communication/http/message_store.h
+        communication/temp_store/message_store.cpp
+        communication/temp_store/message_store.h
         managers/topic_manager.cpp
         managers/topic_manager.cpp
         managers/topic_manager.h
@@ -57,7 +57,10 @@ set(SOURCES
         managers/initialization_manager.h
         topics/topic_private/topic_user/topic_private_user_structure.h
         topics/topic_private/topic_user/topic_private_user_definition.cpp
-        topics/topic_private/topic_user/topic_private_user_definition.h)
+        topics/topic_private/topic_user/topic_private_user_definition.h
+        communication/tcp/tcp_server.cpp
+        communication/tcp/tcp_server.h
+)
 
 add_executable(Googom ${SOURCES})
 
