@@ -7,7 +7,7 @@
 
 #include "../topic_io/topic_io.h"
 #include "../topic_public/topic_public_structure.h"
-#include "../utilities/print_utilities.h"
+#include "../../utilities/print_utilities.h"
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>

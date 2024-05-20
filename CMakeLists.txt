@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.27)
 project(Googom)
 
+file(COPY ${CMAKE_SOURCE_DIR}/configs DESTINATION ${CMAKE_BINARY_DIR})
+
 include(ExternalProject)  # Include the ExternalProject module
 
 option(ARROW_LINK_SHARED "Link to the Arrow shared library" ON)
@@ -27,25 +29,38 @@ find_package(Boost REQUIRED COMPONENTS serialization)
 
 set(SOURCES
         main.cpp
-        topic_public/topic_public_definition.cpp
-        topic_public/topic_public_definition.h
-        topic_public/topic_public_structure.h
-        topic_io/topic_io.cpp
-        topic_io/topic_io.h
-        topic_debugging/topic_debugging.cpp
-        topic_debugging/topic_debugging.h
+        topics/topic_public/topic_public_definition.cpp
+        topics/topic_public/topic_public_definition.h
+        topics/topic_public/topic_public_structure.h
+        topics/topic_io/topic_io.cpp
+        topics/topic_io/topic_io.h
+        topics/topic_debugging/topic_debugging.cpp
+        topics/topic_debugging/topic_debugging.h
         utilities/print_utilities.cpp
         utilities/print_utilities.h
-        topic_private/topic_offset/topic_private_offset_structure.h
+        topics/topic_private/topic_offset/topic_private_offset_structure.h
         utilities/utils.cpp
         utilities/utils.h
-        topic_public/topic_public_message.h
-        topic_private/topic_offset/topic_private_offset_definition.cpp
-        topic_private/topic_offset/topic_private_offset_definition.h
-        http/http_session.h
-        http/http_session.cpp
-        http/simple_http_server.cpp
-        http/simple_http_server.h)
+        topics/topic_public/topic_public_message.h
+        topics/topic_private/topic_offset/topic_private_offset_definition.cpp
+        topics/topic_private/topic_offset/topic_private_offset_definition.h
+        communication/http/rest_server.cpp
+        communication/http/rest_server.h
+        communication/temp_store/message_store.cpp
+        communication/temp_store/message_store.h
+        managers/topic_manager.cpp
+        managers/topic_manager.cpp
+        managers/topic_manager.h
+        managers/config_manager.cpp
+        managers/config_manager.h
+        managers/initialization_manager.cpp
+        managers/initialization_manager.h
+        topics/topic_private/topic_user/topic_private_user_structure.h
+        topics/topic_private/topic_user/topic_private_user_definition.cpp
+        topics/topic_private/topic_user/topic_private_user_definition.h
+        communication/tcp/tcp_server.cpp
+        communication/tcp/tcp_server.h
+)
 
 add_executable(Googom ${SOURCES})
 

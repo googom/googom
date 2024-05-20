@@ -8,7 +8,7 @@
 #include "../topic_io/topic_io.h"
 #include "topic_public_structure.h"
 #include "topic_public_message.h"
-#include "../utilities/utils.h"
+#include "../../utilities/utils.h"
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>

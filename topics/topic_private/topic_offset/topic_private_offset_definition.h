@@ -14,6 +14,7 @@
 #include <arrow/scalar.h>
 #include <boost/thread/shared_mutex.hpp>
 
+//TODO persistence is missing!!
 class TopicPrivateOffsetDefinition {
     static boost::shared_mutex mutex_;
     static std::shared_ptr<TopicPrivateOffsetDefinition> instance_;
@@ -31,9 +32,11 @@ public:
 
     void insert(const TopicPrivateOffsetStructure &new_struct);
     void update(int index, const TopicPrivateOffsetStructure &updated_struct);
-    int searchByOffset(boost::multiprecision::uint128_t offset);
+    int searchForIndex(const TopicPrivateOffsetStructure &topicPrivateOffsetStructure);
     TopicPrivateOffsetStructure searchByCriteriaTypeReturn(const std::string &topic, const std::string &nodeId, uint8_t partition, const std::string &type);
+    std::vector<TopicPrivateOffsetStructure> searchByCriteriaVectorTypeReturn(const std::string &topic,  const std::string &nodeId, const std::string &type);
     int searchByCriteria(const std::string &topic, const std::string &nodeId, uint8_t partition, const std::string &type);
+    std::vector<TopicPrivateOffsetStructure> searchByNameTypeReturn(const std::string &topic);
     void printAll();
     void printStruct(const TopicPrivateOffsetStructure& p_struct);
     void printStruct(int index);

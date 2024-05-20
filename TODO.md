@@ -45,3 +45,15 @@ Each of the partition should have a leader and follower nodes.
 
 This information should be kept separately.
 
+
+# Transport topic
+I need a process to consume the transport topic. This is an internal topic to be shipped all the followers.
+
+# Partitioner logic
+
+The problem is, how to decide which partition should get the message?
+
+# Warning messages at the startup
+This solved the one message
+`echo 88208 | tee /proc/sys/fs/aio-max-nr`
+The other message needs numa configured
