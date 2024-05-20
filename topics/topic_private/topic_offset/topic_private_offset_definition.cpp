@@ -33,12 +33,14 @@ void TopicPrivateOffsetDefinition::update(int index, const TopicPrivateOffsetStr
     }
 }
 
+
 // Search for a structure by offset and return its index - Read operation
-int TopicPrivateOffsetDefinition::searchByOffset(boost::multiprecision::uint128_t offset) {
+int TopicPrivateOffsetDefinition::searchForIndex(const TopicPrivateOffsetStructure &topicPrivateOffsetStructure) {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
     auto it = std::find_if(privateOffsetStructure.begin(), privateOffsetStructure.end(),
-                           [&offset](const TopicPrivateOffsetStructure &entry) {
-                               return entry.getOffset() == offset;
+                           [&topicPrivateOffsetStructure](const TopicPrivateOffsetStructure &entry) {
+                               return entry.getTopic() == topicPrivateOffsetStructure.getTopic() && entry.getNodeId() == topicPrivateOffsetStructure.getNodeId() &&
+                                      entry.getPartition() == topicPrivateOffsetStructure.getPartition() && entry.getType() == topicPrivateOffsetStructure.getType();
                            });
 
     if (it != privateOffsetStructure.end()) {
@@ -66,7 +68,9 @@ TopicPrivateOffsetStructure TopicPrivateOffsetDefinition::searchByCriteriaTypeRe
     return {};  // or throw an exception based on your error handling strategy
 }
 
-int TopicPrivateOffsetDefinition::searchByCriteria(const std::string &topic, const std::string &nodeId, uint8_t partition, const std::string &type) {
+int
+TopicPrivateOffsetDefinition::searchByCriteria(const std::string &topic, const std::string &nodeId, uint8_t partition,
+                                               const std::string &type) {
     boost::shared_lock<boost::shared_mutex> lock(mutex_);
     auto it = std::find_if(privateOffsetStructure.begin(), privateOffsetStructure.end(),
                            [&topic, &nodeId, partition, &type](const TopicPrivateOffsetStructure &entry) {
@@ -87,14 +91,14 @@ void TopicPrivateOffsetDefinition::printAll() {
     if (privateOffsetStructure.empty()) {
         std::cout << "No entries available." << std::endl;
     } else {
-        for (const auto& structure : privateOffsetStructure) {
+        for (const auto &structure: privateOffsetStructure) {
             printStruct(structure);
         }
     }
 }
 
 // Print the details of a single TopicPrivateOffsetStructure - Read operation
-void TopicPrivateOffsetDefinition::printStruct(const TopicPrivateOffsetStructure& p_struct) {
+void TopicPrivateOffsetDefinition::printStruct(const TopicPrivateOffsetStructure &p_struct) {
     std::cout << "Offset: " << p_struct.getOffset() << ", "
               << "Timestamp: " << p_struct.getTimestamp() << ", "
               << "Topic: " << p_struct.getTopic() << ", "
@@ -109,4 +113,49 @@ void TopicPrivateOffsetDefinition::printStruct(int index) {
     if (index >= 0 && index < static_cast<int>(privateOffsetStructure.size())) {
         printStruct(privateOffsetStructure[index]);
     }
+}
+
+std::vector<TopicPrivateOffsetStructure>
+TopicPrivateOffsetDefinition::searchByCriteriaVectorTypeReturn(const std::string &topic, const std::string &nodeId,
+                                                               const std::string &type) {
+
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    std::vector<TopicPrivateOffsetStructure> result;
+
+    auto it = std::find_if(privateOffsetStructure.begin(), privateOffsetStructure.end(),
+                           [&topic, &nodeId, &type](const TopicPrivateOffsetStructure &entry) {
+                               return entry.getTopic() == topic && entry.getNodeId() == nodeId &&
+                                      entry.getType() == type;
+                           });
+
+    while (it != privateOffsetStructure.end()) {
+        result.push_back(*it);
+        it = std::find_if(++it, privateOffsetStructure.end(),
+                          [&topic, &type](const TopicPrivateOffsetStructure &entry) {
+                              return entry.getTopic() == topic && entry.getType() == type;
+                          });
+    }
+
+    return result;
+}
+
+std::vector<TopicPrivateOffsetStructure>
+TopicPrivateOffsetDefinition::searchByNameTypeReturn(const std::string &topic) {
+    boost::shared_lock<boost::shared_mutex> lock(mutex_);
+    std::vector<TopicPrivateOffsetStructure> result;
+
+    auto it = std::find_if(privateOffsetStructure.begin(), privateOffsetStructure.end(),
+                           [&topic](const TopicPrivateOffsetStructure &entry) {
+                               return entry.getTopic() == topic;
+                           });
+
+    while (it != privateOffsetStructure.end()) {
+        result.push_back(*it);
+        it = std::find_if(++it, privateOffsetStructure.end(),
+                          [&topic](const TopicPrivateOffsetStructure &entry) {
+                              return entry.getTopic() == topic;
+                          });
+    }
+
+    return result;
 }
