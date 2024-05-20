@@ -5,7 +5,6 @@
 
 #include <seastar/core/app-template.hh>
 #include <seastar/core/coroutine.hh>
-#include <seastar/core/temporary_buffer.hh>
 
 #include "communication/http/rest_server.h"
 #include "communication/http/message_store.h"
@@ -16,40 +15,42 @@
 
 // TCP Server Handler
 seastar::future<> handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
-    return seastar::do_with(std::move(socket), [](auto& socket) {
-        auto in = socket.input();
-        auto out = socket.output();
+    auto in = socket.input();
+    auto out = socket.output();
 
-        // Helper function to safely read and prepend "hello " to messages
-        auto safely_read_and_modify = [&in]() -> seastar::future<seastar::temporary_buffer<char>> {
-            return in.read().then([](seastar::temporary_buffer<char> buf) {
-                if (!buf) {
-                    throw std::runtime_error("End of stream");
-                }
-                std::string message = "hello " + std::string(buf.get(), buf.size());
-                // Use the correct constructor for temporary_buffer
-                return seastar::temporary_buffer<char>(message.data(), message.size());
-            });
-        };
-
-        return seastar::repeat([&in, &out, &safely_read_and_modify] {
-            return safely_read_and_modify().then([&out](seastar::temporary_buffer<char> buf) {
-                return out.write(std::move(buf)).then([&out] {
-                    return out.flush();
-                }).then([] {
-                    return seastar::stop_iteration::no;
-                });
-            }).handle_exception([&out](std::exception_ptr e) {
-                // Log error and stop repeating if there's an exception
-                std::cout << "Error handling TCP connection: " << e << std::endl;
-                return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
-            });
-        }).finally([&out] {
-            return out.close();
-        });
-    });
+    return seastar::do_with(std::move(socket), std::move(in), std::move(out),
+                            [](auto &socket, auto &in, auto &out) {
+                                return seastar::repeat([&in, &out] {
+                                    return in.read().then([&out](seastar::temporary_buffer<char> buf) {
+                                        if (buf) {
+                                            std::string message = "hello " + std::string(buf.get(), buf.size());
+                                            return out.write(message).then([&out] {
+                                                return out.flush();
+                                            }).then([] {
+                                                return seastar::stop_iteration::no;
+                                            });
+                                        } else {
+                                            return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
+                                        }
+                                    }).handle_exception([](std::exception_ptr eptr) {
+                                        try {
+                                            std::rethrow_exception(eptr);
+                                        } catch (const std::exception &e) {
+                                            std::cerr << "Error reading from input stream: " << e.what() << '\n';
+                                        }
+                                        return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
+                                    });
+                                }).finally([&out] {
+                                    return out.close().handle_exception([](std::exception_ptr eptr) {
+                                        try {
+                                            std::rethrow_exception(eptr);
+                                        } catch (const std::exception &e) {
+                                            std::cerr << "Error closing output stream: " << e.what() << '\n';
+                                        }
+                                    });
+                                });
+                            });
 }
-
 
 int main(int argc, char **argv) {
     //!!The first stage
