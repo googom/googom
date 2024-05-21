@@ -60,6 +60,7 @@ set(SOURCES
         topics/topic_private/topic_user/topic_private_user_definition.h
         communication/tcp/tcp_server.cpp
         communication/tcp/tcp_server.h
+        communication/tcp/tcp_session.h
 )
 
 add_executable(Googom ${SOURCES})

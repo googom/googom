@@ -14,9 +14,11 @@ class TcpServer {
     message_store& _store;
 
 public:
-    TcpServer(message_store& store);
+    explicit TcpServer(message_store& store);
     seastar::future<> start(uint16_t port);
     seastar::future<> handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr);
+
+    std::string intToIPv4(seastar::net::packed<uint32_t> ip);
 };
 
 #endif // GOOGOM_TCP_SERVER_H
