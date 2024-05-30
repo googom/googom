@@ -8,6 +8,8 @@
 #include <seastar/net/api.hh>
 #include <seastar/net/ip.hh>
 
+#include "../communication_utils/communication_utils.h"
+
 TcpServer::TcpServer(message_store &store)
         : _store(store) {}
 
@@ -27,8 +29,17 @@ seastar::future<> TcpServer::start(uint16_t port) {
     });
 }
 
+/*
+ *  HOW a message should look like
+ *  COMMAND: key1=value with spaces, key2=another value
+ *  MESSAGE: key1=value with spaces, key2=another value | [\"some text\"]
+ *  SYSTEM: key1=value with spaces, key2=another value | [\"some text\"]
+ *
+ * TEST messages
+ * COMMAND: user=myuser, topics=topic1 topic2
+ * MESSAGE: topic=topic1 | [\"some text\"]
+ */
 seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
-
     // Create a new session for each connection
     auto session = std::make_unique<TcpSession>(std::move(socket));
 
@@ -40,32 +51,57 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
 
     if (addr.addr().is_ipv6()) {
         std::string str(reinterpret_cast<char *>(addr.addr().as_ipv6_address().ip.begin()),
-                        sizeof(addr.addr().as_ipv6_address().ip.size()));
+                        addr.addr().as_ipv6_address().ip.size());
         session->params["client_address_ipv6"] = str;
     } else {
         session->params["client_address_ipv6"] = "NONE";
     }
 
-    return seastar::do_with(std::move(*session), [this](auto &sess) {
+    return seastar::do_with(std::move(session), [this](auto& sess) {
         return seastar::repeat([&sess, this] {
-            return sess.in.read().then([&sess, this](seastar::temporary_buffer<char> buf) {
-                if (buf) {
-                    std::cout << "Request came from ipv4: " << sess.params["client_address_ipv4"] << "\n";
-                    std::cout << "Request came from ipv6: " << sess.params["client_address_ipv6"] << "\n";
-                    std::string message(buf.get(), buf.size());
-                    //IDLE CONNECTION TILL there is a command!!
-                    //ALL the sessions should be pushed to the internal topics
-                    int id = _store.store_message(message);
-                    return sess.out.write("Stored message with ID: " + std::to_string(id))
-                            .then([&sess] { return sess.out.flush(); })
-                            .then([] { return seastar::stop_iteration::no; });
-                } else {
+            return sess->in.read().then([&sess, this](seastar::temporary_buffer<char> buf) {
+                if (!buf) {
+                    // No more data to read, stop the iteration
                     return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
                 }
+
+                std::cout << "Request came from ipv4: " << sess->params["client_address_ipv4"] << "\n";
+                std::cout << "Request came from ipv6: " << sess->params["client_address_ipv6"] << "\n";
+                std::string message(buf.get(), buf.size());
+                //IDLE CONNECTION TILL there is a command!!
+                //ALL the sessions should be pushed to the internal topics
+                
+                auto parsedResult = parseInput(message);
+                if (parsedResult.type == MessageType::COMMAND) {
+                    for (const auto& kv : parsedResult.keyValuePairs) {
+                        std::cout << "Key: " << kv.first << ", Value: " << kv.second << std::endl;
+                        sess->params[kv.first] = kv.second;
+                    }
+                    // Continue the loop after processing COMMAND
+                    return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::no);
+                } else if (parsedResult.type == MessageType::MESSAGE) {
+                    // TODO: Check if topic is set
+                    // TODO: Check if user has permissions
+                    // TODO: Real topic writing
+
+                    for (const auto& kv : parsedResult.keyValuePairs) {
+                        std::cout << "Key: " << kv.first << ", Value: " << kv.second << std::endl;
+                    }
+
+                    int id = _store.store_message(parsedResult.message);
+
+                    return sess->out.write("Stored message with ID: " + std::to_string(id))
+                            .then([&sess] { return sess->out.flush(); })
+                            .then([] { return seastar::stop_iteration::no; });
+                }
+
+                // If parsedResult type is neither COMMAND nor MESSAGE, continue the loop
+                return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::no);
             });
-        }).finally([&sess] { return sess.out.close(); });
+        }).finally([&sess] { return sess->out.close(); });
     });
 }
+
 
 std::string TcpServer::intToIPv4(seastar::net::packed<uint32_t> ip) {
     // Break down the integer into its octets

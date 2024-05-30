@@ -61,6 +61,7 @@ set(SOURCES
         communication/tcp/tcp_server.cpp
         communication/tcp/tcp_server.h
         communication/tcp/tcp_session.h
+        communication/communication_utils/communication_utils.h
 )
 
 add_executable(Googom ${SOURCES})

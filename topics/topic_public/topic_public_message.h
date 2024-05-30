@@ -21,13 +21,16 @@
 // Adjusted to use a string for offset to work around Apache Arrow type
 // limitations
 class TopicPublicMessage {
+    std::string topic;
     std::string keys;
     std::string headers;
     std::vector<uint8_t> value; // Representing binary data
 
     friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
+
+    template<class Archive>
+    void serialize(Archive &ar, const unsigned int version) {
+        ar & topic;
         ar & keys;
         ar & headers;
         ar & value;
@@ -37,21 +40,33 @@ public:
     TopicPublicMessage() {}
 
     TopicPublicMessage(
-      std::string keys,
-      std::string headers,
-      const std::vector<uint8_t>& value)
-      : keys(std::move(keys))
-      , headers(std::move(headers))
-      , value(value) {}
+            std::string topic,
+            std::string keys,
+            std::string headers,
+            const std::vector<uint8_t> &value)
+            : topic(std::move(topic)),  keys(std::move(keys)), headers(std::move(headers)), value(value) {}
 
-    const std::string& getKeys() const { return keys; }
-    void setKeys(const std::string& keys) { TopicPublicMessage::keys = keys; }
-    const std::string& getHeaders() const { return headers; }
-    void setHeaders(const std::string& headers) {
+    const std::string &getTopic() const {
+        return topic;
+    }
+
+    void setTopic(const std::string &topic) {
+        TopicPublicMessage::topic = topic;
+    }
+
+    const std::string &getKeys() const { return keys; }
+
+    void setKeys(const std::string &keys) { TopicPublicMessage::keys = keys; }
+
+    const std::string &getHeaders() const { return headers; }
+
+    void setHeaders(const std::string &headers) {
         TopicPublicMessage::headers = headers;
     }
-    const std::vector<uint8_t>& getValue() const { return value; }
-    void setValue(const std::vector<uint8_t>& value) {
+
+    const std::vector<uint8_t> &getValue() const { return value; }
+
+    void setValue(const std::vector<uint8_t> &value) {
         TopicPublicMessage::value = value;
     }
 };
