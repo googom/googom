@@ -3,7 +3,6 @@
 //
 
 #include "tcp_server.h"
-#include "tcp_session.h"
 #include <seastar/core/seastar.hh>
 #include <seastar/net/api.hh>
 #include <seastar/net/ip.hh>
@@ -57,7 +56,7 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
         session->params["client_address_ipv6"] = "NONE";
     }
 
-    return seastar::do_with(std::move(session), [this](auto& sess) {
+    return seastar::do_with(std::move(session), [this](auto &sess) {
         return seastar::repeat([&sess, this] {
             return sess->in.read().then([&sess, this](seastar::temporary_buffer<char> buf) {
                 if (!buf) {
@@ -70,12 +69,21 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
                 std::string message(buf.get(), buf.size());
                 //IDLE CONNECTION TILL there is a command!!
                 //ALL the sessions should be pushed to the internal topics
-                
+
                 auto parsedResult = parseInput(message);
                 if (parsedResult.type == MessageType::COMMAND) {
-                    for (const auto& kv : parsedResult.keyValuePairs) {
+                    for (const auto &kv: parsedResult.keyValuePairs) {
                         std::cout << "Key: " << kv.first << ", Value: " << kv.second << std::endl;
                         sess->params[kv.first] = kv.second;
+
+                        // Handle topic subscription
+                        if (kv.first == "topics") {
+                            std::istringstream ss(kv.second);
+                            std::string topic;
+                            while (ss >> topic) {
+                                add_subscription(topic, sess.get());
+                            }
+                        }
                     }
                     // Continue the loop after processing COMMAND
                     return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::no);
@@ -84,11 +92,11 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
                     // TODO: Check if user has permissions
                     // TODO: Real topic writing
 
-                    for (const auto& kv : parsedResult.keyValuePairs) {
+                    for (const auto &kv: parsedResult.keyValuePairs) {
                         std::cout << "Key: " << kv.first << ", Value: " << kv.second << std::endl;
                     }
 
-                    int id = _store.store_message(parsedResult.message);
+                    int id = _store.store_message(parsedResult.message, parsedResult.keyValuePairs["topic"]);
 
                     return sess->out.write("Stored message with ID: " + std::to_string(id))
                             .then([&sess] { return sess->out.flush(); })
@@ -98,8 +106,25 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
                 // If parsedResult type is neither COMMAND nor MESSAGE, continue the loop
                 return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::no);
             });
-        }).finally([&sess] { return sess->out.close(); });
+        }).finally([&sess, this] {
+            // Cleanup the session on disconnection
+            cleanup_session(sess.get());
+            return sess->out.close();
+        });
     });
+}
+
+void TcpServer::cleanup_session(TcpSession* session) {
+    // Remove the session from all topic subscriptions
+    for (const auto& kv : session->params) {
+        if (kv.first == "topics") {
+            std::istringstream ss(kv.second);
+            std::string topic;
+            while (ss >> topic) {
+                remove_subscription(topic, session);
+            }
+        }
+    }
 }
 
 
@@ -115,4 +140,30 @@ std::string TcpServer::intToIPv4(seastar::net::packed<uint32_t> ip) {
            std::to_string(octet2) + "." +
            std::to_string(octet3) + "." +
            std::to_string(octet4);
+}
+
+void TcpServer::notify_subscribers(const std::string &topic, const std::string &message) {
+    if (_subscriptions.find(topic) != _subscriptions.end()) {
+        for (auto session: _subscriptions[topic]) {
+            session->out.write("New message in topic " + topic + ": " + message + "\n").then([session] {
+                return session->out.flush();
+            }).handle_exception([](std::exception_ptr eptr) {
+                try {
+                    std::rethrow_exception(eptr);
+                } catch (const std::exception &e) {
+                    std::cerr << "Error notifying subscriber: " << e.what() << std::endl;
+                }
+            });
+        }
+    }
+}
+
+void TcpServer::add_subscription(const std::string &topic, TcpSession *session) {
+    _subscriptions[topic].insert(session);
+}
+
+void TcpServer::remove_subscription(const std::string &topic, TcpSession *session) {
+    if (_subscriptions.find(topic) != _subscriptions.end()) {
+        _subscriptions[topic].erase(session);
+    }
 }

@@ -23,9 +23,24 @@ public:
     std::unordered_map<int, std::string> messages;
     int next_id = 0;
 
-    int store_message(const std::string& msg) {
+    // Callback function to notify about new messages
+    std::function<void(const std::string&, const std::string&)> on_message_stored;
+
+    // Set the callback for new messages
+    void set_on_message_stored_callback(std::function<void(const std::string&, const std::string&)> callback) {
+        on_message_stored = callback;
+    }
+
+
+    int store_message(const std::string& msg, const std::string& topic) {
         unsigned int id = next_id++;
         messages[id] = msg;
+
+        // Trigger the callback if it's set
+        if (on_message_stored) {
+            on_message_stored(topic, msg);
+        }
+
         return id;
     }
 
@@ -49,6 +64,7 @@ public:
     bool delete_message(int id) {
         return messages.erase(id) > 0;
     }
+
 };
 
 

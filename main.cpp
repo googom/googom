@@ -27,6 +27,11 @@ int main(int argc, char **argv) {
     RestServer rest(store);
     TcpServer tcpServer(store);
 
+    // Set the callback for new messages
+    store.set_on_message_stored_callback([&tcpServer](const std::string& topic, const std::string& message) {
+        tcpServer.notify_subscribers(topic, message);
+    });
+
 
     return app.run(argc, argv, [&app, &rest, &tcpServer]() -> seastar::future<> {
         auto &args = app.configuration();

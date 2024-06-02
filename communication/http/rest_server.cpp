@@ -102,7 +102,7 @@ void RestServer::setup_routes() {
         r.add(httpd::POST, httpd::url("/message"),
               new httpd::function_handler([this](std::unique_ptr<http::request> req, std::unique_ptr<http::reply> rep) {
                   auto content = req->content;
-                  int id = _store.store_message(content);
+                  int id = _store.store_message(content,"test");
                   rep->write_body("json", seastar::json::stream_object(std::to_string(id)));
                   rep->done("json");
                   return seastar::make_ready_future<std::unique_ptr<http::reply>>(std::move(rep));
