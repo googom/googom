@@ -21,6 +21,9 @@ jobs:
         with:
           driver: docker-container
 
+      - name: Create cache directory
+        run: mkdir -p /tmp/.buildx-cache
+
       - name: Cache Docker layers
         uses: actions/cache@v2
         with:
@@ -31,7 +34,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image .
+          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --load .
 
       - name: Save Docker image as a tarball
         run: |
