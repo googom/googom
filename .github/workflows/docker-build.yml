@@ -32,9 +32,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
+      - name: Copy Dockerfile
+        run: mkdir -p /tmp/docker && cp googom/.devcontainer/Dockerfile /tmp/docker/Dockerfile
+
       - name: Build Docker image
         run: |
-          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --file googom/.devcontainer/Dockerfile --load .
+          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --file /tmp/docker/Dockerfile --load .
 
       - name: Save Docker image as a tarball
         run: |
