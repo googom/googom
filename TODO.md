@@ -53,6 +53,27 @@ I need a process to consume the transport topic. This is an internal topic to be
 
 The problem is, how to decide which partition should get the message?
 
+# unlisted items
+Topics should have versions
+
+Publicly writable topics
+
+Messages should send  ACK, this should be configurable. Client can wait single ACK all ISR ACK
+
+Brokers should have TCP listener for inter-broker communication
+
+Protobuff should be the default type for inter-broker
+
+Row deletion and topic deletion should be as a configuration
+
+Writing to parquet is also important
+
+Query with timestamp and offset range should be in place
+
+# Data flow
+
+Once the data inserted, process should notify disk writer task every x number of records. Process also should  push the data to all connected to brokers for replication and partitioning
+
 # Warning messages at the startup
 This solved the one message
 `echo 88208 | tee /proc/sys/fs/aio-max-nr`
