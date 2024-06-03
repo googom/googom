@@ -1,4 +1,4 @@
-name: Build and Save Docker Artifacts
+name: Build and Save Docker and CMake Artifacts
 
 on:
   push:
@@ -32,23 +32,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: List directory contents for debugging
-        run: |
-          ls -R
-
       - name: Copy Dockerfile
-        run: mkdir -p /tmp/docker && cp .devcontainer/Dockerfile /tmp/docker/Dockerfile
+        run: mkdir -p /tmp/docker && cp googom/.devcontainer/Dockerfile /tmp/docker/Dockerfile
 
       - name: Build Docker image
         run: |
           docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --file /tmp/docker/Dockerfile --load .
 
-      - name: Save Docker image as a tarball
+      - name: Run CMake build in Docker container
         run: |
-          docker save my-docker-image -o my-docker-image.tar
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace my-docker-image /bin/bash -c "
+            mkdir -p build &&
+            cd build &&
+            cmake .. &&
+            cmake --build ."
 
-      - name: Upload Docker image artifact
+      - name: Upload CMake build artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: my-docker-image
-          path: my-docker-image.tar
+          name: cmake-build-artifacts
+          path: build
