@@ -34,7 +34,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --file ../../.devcontainer/Dockerfile --load .
+          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --file googom/.devcontainer/Dockerfile --load .
 
       - name: Save Docker image as a tarball
         run: |
