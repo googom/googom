@@ -33,18 +33,18 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Load Docker image from cache
-        id: build-docker-image
-        if: steps.docker-cache.outputs.cache-hit != 'true'
-        run: |
-          echo "Cache not found, building Docker image"
-          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --file googom/.devcontainer/Dockerfile --load .
-
-      - name: Load Docker image from cache
         id: load-docker-image
         if: steps.docker-cache.outputs.cache-hit == 'true'
         run:
           echo "Cache hit, loading Docker image"
           docker load -i /tmp/.buildx-cache/my-docker-image.tar || true
+
+      - name: Load Docker image from cache
+        id: build-docker-image
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "Cache not found, building Docker image"
+          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --file .devcontainer/Dockerfile --load .
 
       - name: Save Docker image to cache
         if: steps.docker-cache.outputs.cache-hit != 'true'
