@@ -3,9 +3,9 @@ FROM debian:trixie-slim AS base
 
 RUN apt-get -y update
 RUN apt-get -y install gnupg curl
-RUN echo "deb http://apt.llvm.org/mantic/ llvm-toolchain-mantic-17 main" \
+RUN echo "deb http://apt.llvm.org/unstable/ llvm-toolchain-unstable-17 main" \
     >> /etc/apt/sources.list.d/llvm.list
-RUN echo "deb http://apt.llvm.org/mantic/ llvm-toolchain-mantic-18 main" \
+RUN echo "deb http://apt.llvm.org/unstable/ llvm-toolchain-unstable-18 main" \
     >> /etc/apt/sources.list.d/llvm.list
 
 RUN curl -sSL https://apt.llvm.org/llvm-snapshot.gpg.key -o /etc/apt/trusted.gpg.d/apt.llvm.org.asc
