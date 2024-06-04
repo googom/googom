@@ -55,7 +55,7 @@ jobs:
 
       - name: Authenticate with GitHub CLI
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+          echo ${{ secrets.G_TOKEN }} | gh auth login --with-token
 
       - name: Publish package
         if: github.event_name == 'push'
