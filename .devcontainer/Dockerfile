@@ -1,5 +1,5 @@
 # Stage 1: Base image and essential dependencies
-FROM ubuntu:mantic AS base
+FROM debian:trixie-slim AS base
 
 RUN apt-get -y update
 RUN apt-get -y install gnupg curl
@@ -78,7 +78,7 @@ RUN git submodule update --init --recursive
 RUN bash install-dependencies.sh
 
 # Run cooking script with additional parameters
-RUN bash cooking.sh -i dpdk -t Release -- -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-fcoroutines"
+RUN bash cooking.sh -i dpdk -t Release -- -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-fcoroutines" -DWERROR=OFF
 
 # Build Seastar
 RUN ninja -C build install
