@@ -60,4 +60,4 @@ jobs:
       - name: Publish package
         if: github.event_name == 'push'
         run: |
-          gh release create v${{ github.run_number }} build/Googom.tar.gz --notes "Automated build"
+            gh release create v${{ github.run_number }} build/Googom.tar.gz --notes "Automated build"
