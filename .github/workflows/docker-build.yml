@@ -1,4 +1,4 @@
-name: Build and Save Docker and CMake Artifacts
+name: Build, Package, and Publish
 
 on:
   push:
@@ -21,55 +21,46 @@ jobs:
         with:
           driver: docker-container
 
-      - name: Create cache directory
-        run: mkdir -p /tmp/.buildx-cache
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Docker image from cache
-        id: load-docker-image
-        if: steps.docker-cache.outputs.cache-hit == 'true'
-        run:
-          echo "Cache hit, loading Docker image"
-          docker load -i /tmp/.buildx-cache/my-docker-image.tar || true
-
-      - name: Build Docker image from cache
-        id: build-docker-image
-        if: steps.docker-cache.outputs.cache-hit != 'true'
+      - name: Check for existing Docker image
+        id: check-image
         run: |
-          echo "Cache not found, building Docker image"
-          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --file .devcontainer/Dockerfile --load .
-
-      - name: Save Docker image to cache
-        if: steps.docker-cache.outputs.cache-hit != 'true'
-        run: |
-          docker save my-docker-image -o /tmp/.buildx-cache/my-docker-image.tar
-
-      - name: Copy Dockerfile
-        run: mkdir -p /tmp/docker && cp .devcontainer/Dockerfile /tmp/docker/Dockerfile
+          if docker pull ghcr.io/${{ github.repository_owner }}/my-docker-image:latest; then
+            echo "Image exists"
+            echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "Image does not exist"
+            echo "IMAGE_EXISTS=false" >> $GITHUB_ENV
+          fi
 
       - name: Build Docker image
+        if: env.IMAGE_EXISTS == 'false'
         run: |
-          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag my-docker-image --file /tmp/docker/Dockerfile --load .
+          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag ghcr.io/${{ github.repository_owner }}/my-docker-image:latest --file googom/.devcontainer/Dockerfile --push .
 
       - name: Run CMake build in Docker container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace my-docker-image /bin/bash -c "
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/${{ github.repository_owner }}/my-docker-image:latest /bin/bash -c "
             mkdir -p build &&
             cd build &&
             cmake .. &&
-            cmake --build ."
-
-      - name: Create tarball of the built executable
-        run: |
-          tar -czvf /workspace/build/Googom.tar.gz -C build Googom
+            cmake --build . &&
+            tar -czvf Googom.tar.gz Googom"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v2
         with:
           name: cmake-build-artifacts
-          path: /workspace/build/Googom.tar.gz
+          path: build/Googom.tar.gz
 
       - name: Publish package
         if: github.event_name == 'push'
         run: |
           gh auth login --with-token ${{ secrets.GITHUB_TOKEN }}
-          gh release create v${{ github.run_number }} /workspace/build/Googom.tar.gz --notes "Automated build"
+          gh release create v${{ github.run_number }} build/Googom.tar.gz --notes "Automated build"
