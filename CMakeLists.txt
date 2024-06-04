@@ -80,4 +80,9 @@ message(STATUS "Arrow SO version: ${ARROW_FULL_SO_VERSION}")
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Link libraries statically
+set(Boost_USE_STATIC_LIBS ON)  # Use static linking for Boost
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+find_package(Boost REQUIRED COMPONENTS serialization)
+
 target_link_libraries(Googom PRIVATE Arrow::arrow_static Seastar::seastar ${Boost_LIBRARIES})
