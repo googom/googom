@@ -42,11 +42,11 @@ jobs:
       - name: Build Docker image
         if: env.IMAGE_EXISTS == 'false'
         run: |
-          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag googom.azurecr.io/googom-dev:1.0 --file .devcontainer/Dockerfile --push .
+          docker buildx build --tag googom.azurecr.io/googom-dev:1.0 --file .devcontainer/Dockerfile --push .
 
       - name: Run CMake build in Docker container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace googom.azurecr.io/googom-dev:latest /bin/bash -c "
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace googom.azurecr.io/googom-dev:1.0 /bin/bash -c "
             mkdir -p build &&
             cd build &&
             cmake .. &&
