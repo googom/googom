@@ -31,7 +31,7 @@ jobs:
       - name: Check for existing Docker image
         id: check-image
         run: |
-          if docker pull ghcr.io/${{ github.repository_owner }}/my-docker-image:latest; then
+          if docker pull ghcr.io/${{ github.repository_owner }}/googom-dev:latest; then
             echo "Image exists"
             echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
           else
@@ -42,11 +42,11 @@ jobs:
       - name: Build Docker image
         if: env.IMAGE_EXISTS == 'false'
         run: |
-          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag ghcr.io/${{ github.repository_owner }}/my-docker-image:latest --file googom/.devcontainer/Dockerfile --push .
+          docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache --tag ghcr.io/${{ github.repository_owner }}/googom-dev:latest --file .devcontainer/Dockerfile --push .
 
       - name: Run CMake build in Docker container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/${{ github.repository_owner }}/my-docker-image:latest /bin/bash -c "
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace ghcr.io/${{ github.repository_owner }}/googom-dev:latest /bin/bash -c "
             mkdir -p build &&
             cd build &&
             cmake .. &&
