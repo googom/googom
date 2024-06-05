@@ -39,8 +39,12 @@ RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_
 RUN tar --bzip2 -xf boost_1_84_0.tar.bz2
 RUN rm boost_1_84_0.tar.bz2
 WORKDIR boost_1_84_0
+# Bootstrap and build Boost with static libraries only
 RUN ./bootstrap.sh --with-libraries=all
-RUN  ./b2 install
+RUN ./b2 link=static install
+
+# Stage 3: Arrow repository setup and installation
+FROM boost AS arrow
 
 # Stage 2: Arrow repository setup and installation
 FROM boost AS arrow

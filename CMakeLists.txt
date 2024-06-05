@@ -29,7 +29,15 @@ set(Seastar_CXX_DIALECT "gnu++20" CACHE STRING "")
 # Find required packages
 find_package(Seastar REQUIRED)
 find_package(Arrow REQUIRED)
+
+# Use static Boost libraries
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED COMPONENTS serialization)
+
+# Include directories
+include_directories(${Boost_INCLUDE_DIRS})
 
 # Source files
 set(SOURCES
@@ -76,13 +84,12 @@ add_executable(Googom ${SOURCES})
 message(STATUS "Arrow version: ${ARROW_VERSION}")
 message(STATUS "Arrow SO version: ${ARROW_FULL_SO_VERSION}")
 
-# Include directories
-include_directories(${Boost_INCLUDE_DIRS})
-
 # Link libraries statically
-set(Boost_USE_STATIC_LIBS ON)  # Use static linking for Boost
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost REQUIRED COMPONENTS serialization)
-
 target_link_libraries(Googom PRIVATE Arrow::arrow_static Seastar::seastar ${Boost_LIBRARIES})
+
+# Force static linking for Boost
+foreach(boost_lib ${Boost_LIBRARIES})
+    if(boost_lib MATCHES ".+\\.so")
+        message(FATAL_ERROR "Dynamic Boost library found: ${boost_lib}. Ensure all Boost libraries are static (.a)")
+    endif()
+endforeach()
