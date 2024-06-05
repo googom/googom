@@ -34,7 +34,7 @@ find_package(Arrow REQUIRED)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost REQUIRED COMPONENTS serialization)
+find_package(Boost REQUIRED COMPONENTS serialization unit_test_framework)
 
 # Include directories
 include_directories(${Boost_INCLUDE_DIRS})
@@ -85,7 +85,7 @@ message(STATUS "Arrow version: ${ARROW_VERSION}")
 message(STATUS "Arrow SO version: ${ARROW_FULL_SO_VERSION}")
 
 # Link libraries statically
-target_link_libraries(Googom PRIVATE Arrow::arrow_static Seastar::seastar ${Boost_LIBRARIES})
+target_link_libraries(Googom PRIVATE Arrow::arrow_static Seastar::seastar ${Boost_LIBRARIES} Boost::unit_test_framework)
 
 # Force static linking for Boost
 foreach(boost_lib ${Boost_LIBRARIES})
