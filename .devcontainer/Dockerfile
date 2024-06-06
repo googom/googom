@@ -32,16 +32,16 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 13 \
     && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 18 \
     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 18
 
-FROM base as boost
+# Install Boost
+FROM base AS boost
 
-# Download and install Boost
-RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_1_84_0.tar.bz2
-RUN tar --bzip2 -xf boost_1_84_0.tar.bz2
-RUN rm boost_1_84_0.tar.bz2
-WORKDIR boost_1_84_0
-# Bootstrap and build Boost with static libraries only
-RUN ./bootstrap.sh --with-libraries=all
-RUN ./b2 link=static install
+RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_1_84_0.tar.bz2 && \
+    tar --bzip2 -xf boost_1_84_0.tar.bz2 && \
+    rm boost_1_84_0.tar.bz2 && \
+    cd boost_1_84_0 && \
+    ./bootstrap.sh --with-libraries=all --with-toolset=clang --prefix=/usr/local && \
+    ./b2 link=static runtime-link=static install && \
+    cd .. && rm -rf boost_1_84_0
 
 # Stage 3: Arrow repository setup and installation
 FROM boost AS arrow
