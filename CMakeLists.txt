@@ -26,15 +26,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Seastar C++ dialect
 set(Seastar_CXX_DIALECT "gnu++20" CACHE STRING "")
 
-# Find required packages
-find_package(Seastar REQUIRED)
-find_package(Arrow REQUIRED)
-
 # Use static Boost libraries
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost REQUIRED COMPONENTS serialization unit_test_framework)
+
+# Find required packages
+find_package(Seastar REQUIRED)
+find_package(Arrow REQUIRED)
+find_package(Boost REQUIRED COMPONENTS serialization unit_test_framework program_options thread chrono atomic)
+
+# Ensure Boost libraries are static
+foreach(boost_lib ${Boost_LIBRARIES})
+    if(boost_lib MATCHES ".+\\.so")
+        message(FATAL_ERROR "Dynamic Boost library found: ${boost_lib}. Ensure all Boost libraries are static (.a)")
+    endif()
+endforeach()
 
 # Include directories
 include_directories(${Boost_INCLUDE_DIRS})
@@ -84,8 +91,48 @@ add_executable(Googom ${SOURCES})
 message(STATUS "Arrow version: ${ARROW_VERSION}")
 message(STATUS "Arrow SO version: ${ARROW_FULL_SO_VERSION}")
 
-# Link libraries statically
-target_link_libraries(Googom PRIVATE Arrow::arrow_static Seastar::seastar ${Boost_LIBRARIES} Boost::unit_test_framework)
+# Link libraries statically if possible, else fallback to shared
+set(SSL_LIB "")
+set(CRYPTO_LIB "")
+
+# Check for static versions of SSL and Crypto libraries
+find_library(SSL_STATIC_LIBRARY NAMES ssl libssl.a PATHS /usr/lib/x86_64-linux-gnu /usr/local/lib)
+find_library(CRYPTO_STATIC_LIBRARY NAMES crypto libcrypto.a PATHS /usr/lib/x86_64-linux-gnu /usr/local/lib)
+
+if(SSL_STATIC_LIBRARY)
+    set(SSL_LIB ${SSL_STATIC_LIBRARY})
+else()
+    find_library(SSL_SHARED_LIBRARY NAMES ssl libssl.so PATHS /usr/lib/x86_64-linux-gnu /usr/local/lib)
+    set(SSL_LIB ${SSL_SHARED_LIBRARY})
+endif()
+
+if(CRYPTO_STATIC_LIBRARY)
+    set(CRYPTO_LIB ${CRYPTO_STATIC_LIBRARY})
+else()
+    find_library(CRYPTO_SHARED_LIBRARY NAMES crypto libcrypto.so PATHS /usr/lib/x86_64-linux-gnu /usr/local/lib)
+    set(CRYPTO_LIB ${CRYPTO_SHARED_LIBRARY})
+endif()
+
+# Force static linking for Boost and Seastar
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+set(BUILD_SHARED_LIBS OFF)
+
+# Link Arrow statically if possible
+if(NOT ARROW_LINK_SHARED AND TARGET Arrow::arrow_static)
+    set(ARROW_LIB Arrow::arrow_static)
+else()
+    set(ARROW_LIB Arrow::arrow)
+endif()
+
+# Link Seastar statically if possible
+if(TARGET Seastar::seastar_static)
+    set(SEASTAR_LIB Seastar::seastar_static)
+else()
+    set(SEASTAR_LIB Seastar::seastar)
+endif()
+
+# Link the executable with the determined libraries
+target_link_libraries(Googom PRIVATE ${ARROW_LIB} ${SEASTAR_LIB} ${Boost_LIBRARIES} ${SSL_LIB} ${CRYPTO_LIB} -latomic -ldl -lpthread -lrt)
 
 # Force static linking for Boost
 foreach(boost_lib ${Boost_LIBRARIES})
