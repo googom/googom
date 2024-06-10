@@ -1,5 +1,5 @@
 # Stage 1: Base image and essential dependencies
-FROM debian:trixie-slim AS base
+FROM ubuntu:mantic AS base
 
 RUN apt-get -y update
 RUN apt-get -y install gnupg curl
