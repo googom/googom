@@ -77,12 +77,14 @@ RUN git clone https://github.com/googom/seastar.git /seastar
 
 WORKDIR /seastar
 
+RUN git checkout -b dev20240619 origin/dev20240619
+
 RUN git submodule update --init --recursive
 
 RUN bash install-dependencies.sh
 
 # Run cooking script with additional parameters
-RUN bash cooking.sh -i dpdk -t Release -- -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-fcoroutines" -DSeastar_BUILD_TESTS=OFF -DWERROR=OFF
+RUN bash cooking.sh -i dpdk -t Release -- -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-fcoroutines" -DSeastar_APPS=OFF  -DWERROR=OFF
 
 # Build Seastar
 RUN ninja -C build install
