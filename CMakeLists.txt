@@ -82,6 +82,8 @@ set(SOURCES
         communication/tcp/tcp_server.h
         communication/tcp/tcp_session.h
         communication/communication_utils/communication_utils.h
+        managers/distributed_topic_manager.cpp
+        managers/distributed_topic_manager.h
 )
 
 # Add the executable target
