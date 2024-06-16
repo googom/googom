@@ -16,9 +16,8 @@
 extern seastar::distributed<DistributedTopicManager> distributedTopicManager;
 
 
-// Direction is missing
-TcpServer::TcpServer(message_store &store)
-        : _store(store) {}
+
+TcpServer::TcpServer() {}
 
 seastar::future<> TcpServer::start(uint16_t port) {
     seastar::listen_options lo;
@@ -38,9 +37,10 @@ seastar::future<> TcpServer::start(uint16_t port) {
 
 /*
  *  HOW a message should look like
- *  COMMAND: key1=value with spaces, key2=another value
+ *  COMMAND: key1=value with spaces, key2=another value, type=writer
  *  MESSAGE: key1=value with spaces, key2=another value | [\"some text\"]
  *  SYSTEM: key1=value with spaces, key2=another value | [\"some text\"]
+ *  // types in command: WRITER, READER, BROKER
  *
  * TEST messages
  * COMMAND: user=myuser, topics=topic1 topic2
@@ -78,21 +78,40 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
                 //IDLE CONNECTION TILL there is a command!!
                 //ALL the sessions should be pushed to the internal topics
 
+                std::vector<std::string> topicsToSubscribe;
+                std::string type;
+
                 auto parsedResult = parseInput(message);
                 if (parsedResult.type == MessageType::COMMAND) {
                     for (const auto &kv: parsedResult.keyValuePairs) {
                         std::cout << "Key: " << kv.first << ", Value: " << kv.second << std::endl;
                         sess->params[kv.first] = kv.second;
 
+                        if (kv.first == "type") {
+                            std::istringstream ss(kv.second);
+                            ss>>type;
+                        }
+
                         // Handle topic subscription
                         if (kv.first == "topics") {
                             std::istringstream ss(kv.second);
                             std::string topic;
+
                             while (ss >> topic) {
+                                topicsToSubscribe.push_back(topic);
+                            }
+                        }
+                    }
+
+                    //TODO broker should be added
+                    if(type=="reader"){
+                        if(!topicsToSubscribe.empty()){
+                            for(const auto& topic:topicsToSubscribe) {
                                 add_subscription(topic, sess.get());
                             }
                         }
                     }
+
                     // Continue the loop after processing COMMAND
                     return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::no);
                 } else if (parsedResult.type == MessageType::MESSAGE) {

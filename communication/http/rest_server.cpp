@@ -23,8 +23,7 @@ std::string RestServer::encode64(const std::string &val) {
     return tmp.append((3 - val.size() % 3) % 3, '=');
 }
 
-RestServer::RestServer(message_store &store)
-        : _store(store) {}
+RestServer::RestServer(){}
 
 void RestServer::start(uint16_t port) {
     _server.start().then([this, port] {

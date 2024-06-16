@@ -26,14 +26,9 @@ int main(int argc, char **argv) {
     app.add_options()
             ("config,c", boost::program_options::value<std::string>(), "this is for tcp port");
 
-    message_store store;
-    RestServer rest(store);
-    TcpServer tcpServer(store);
 
-    // Set the callback for new messages
-    store.set_on_message_stored_callback([&tcpServer](const std::string &topic, const std::string &message) {
-        tcpServer.notify_subscribers(topic, message);
-    });
+    RestServer rest();
+    TcpServer tcpServer();
 
 
     return app.run(argc, argv, [&app, &rest, &tcpServer]() -> seastar::future<> {

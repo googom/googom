@@ -20,11 +20,16 @@ seastar::future<std::shared_ptr<TopicPublicDefinition>> DistributedTopicManager:
         const std::string &diskFilePath
 ) {
     std::string key = generateKey(topicName, partition);
+
+
     auto it = topics_.find(key);
     if (it != topics_.end()) {
         return seastar::make_ready_future<std::shared_ptr<TopicPublicDefinition>>(it->second);
     } else {
         auto topic = std::make_shared<TopicPublicDefinition>(topicName, partition, bufferSize, diskFilePath);
+        topic->set_on_message_stored_callback([&tcpServer](const std::string &topic, const std::string &message) {
+            tcpServer.notify_subscribers(topic, message);
+        });
         topics_[key] = topic;
         return seastar::make_ready_future<std::shared_ptr<TopicPublicDefinition>>(topic);
     }

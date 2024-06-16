@@ -12,13 +12,12 @@
 #include "tcp_session.h"
 
 class TcpServer {
-    message_store& _store;
     std::unordered_map<std::string, std::unordered_set<TcpSession*>> _subscriptions;
     void cleanup_session(TcpSession* session);
 
 
 public:
-    explicit TcpServer(message_store& store);
+    explicit TcpServer();
     seastar::future<> start(uint16_t port);
     seastar::future<> handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr);
 

@@ -17,13 +17,12 @@
 // TODO security is missing!
 class RestServer {
     seastar::httpd::http_server_control _server;
-    message_store& _store;
 
     std::string decode64(const std::string &val);
     std::string encode64(const std::string &val);
 
 public:
-    RestServer(message_store& store);
+    RestServer();
     void start(uint16_t port);
     seastar::future<> stop();
     void setup_routes();

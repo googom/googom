@@ -20,6 +20,8 @@ class TopicPublicDefinition {
     const std::string topicName;
     const int partition;
 
+
+
     std::vector<TopicPublicStructure> recentBuffer{};
     std::vector<TopicPublicStructure> oldestBuffer{};
 
@@ -41,6 +43,15 @@ public:
       std::string diskFilePath);
 
     void insert(const TopicPublicMessage& data);
+
+
+    // Callback function to notify about new messages
+    std::function<void(const std::string&, const std::string&)> on_message_stored;
+
+    // Set the callback for new messages
+    void set_on_message_stored_callback(std::function<void(const std::string&, const std::string&)> callback) {
+        on_message_stored = callback;
+    }
 
 
     std::string topicFileNameGenerator(std::string topicName, int partition);
