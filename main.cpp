@@ -11,9 +11,12 @@
 #include "communication/temp_store/message_store.h"
 #include "managers/config_manager.h"
 #include "managers/initialization_manager.h"
+#include "managers/distributed_topic_manager.h"
 
 #include <iostream>
 
+// Declare a sharded instance of DistributedTopicManager
+seastar::distributed<DistributedTopicManager> distributedTopicManager;
 
 int main(int argc, char **argv) {
     //!!The first stage
@@ -28,7 +31,7 @@ int main(int argc, char **argv) {
     TcpServer tcpServer(store);
 
     // Set the callback for new messages
-    store.set_on_message_stored_callback([&tcpServer](const std::string& topic, const std::string& message) {
+    store.set_on_message_stored_callback([&tcpServer](const std::string &topic, const std::string &message) {
         tcpServer.notify_subscribers(topic, message);
     });
 
@@ -43,13 +46,18 @@ int main(int argc, char **argv) {
         uint16_t restPort = ConfigManager::getInstance()->getWebPort();
         uint16_t tcpPort = ConfigManager::getInstance()->getTcpPort();
 
-        message_store store;
+        return distributedTopicManager.start()
+                .then([&rest, restPort, &tcpServer, tcpPort] {
 
-        // Start REST server
-        rest.start(restPort);
+                    // Start REST server
+                    rest.start(restPort);
 
-        // Start TCP server
-        return tcpServer.start(tcpPort);
+                    // Start TCP server
+                    return tcpServer.start(tcpPort);
+                })
+                .finally([] {
+                    return distributedTopicManager.stop();
+                });
     });
 
 

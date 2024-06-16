@@ -8,7 +8,15 @@
 #include <seastar/net/ip.hh>
 
 #include "../communication_utils/communication_utils.h"
+#include "../../topics/topic_public/topic_public_definition.h"
+#include "../../topics/topic_public/topic_public_message.h"
+#include "../../managers/distributed_topic_manager.h"
 
+// Include DistributedTopicManager
+extern seastar::distributed<DistributedTopicManager> distributedTopicManager;
+
+
+// Direction is missing
 TcpServer::TcpServer(message_store &store)
         : _store(store) {}
 
@@ -98,9 +106,28 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
 
                     int id = _store.store_message(parsedResult.message, parsedResult.keyValuePairs["topic"]);
 
-                    return sess->out.write("Stored message with ID: " + std::to_string(id))
-                            .then([&sess] { return sess->out.flush(); })
-                            .then([] { return seastar::stop_iteration::no; });
+
+                    // Accessing the DistributedTopicManager to store message
+                    std::string topic = parsedResult.keyValuePairs["topic"];
+                    std::string filename = topic + ".arrow";
+                    return distributedTopicManager.local().getOrCreateTopicPublicDefinition(
+                                    topic, 0, 1024, filename)
+                            .then([id, &sess](std::shared_ptr<TopicPublicDefinition> topicDef) {
+                                // Insert the message into the topic
+                                TopicPublicMessage topicMessage(
+                                        topicDef->getTopicName(),
+                                        "keys_placeholder",
+                                        "headers_placeholder",
+                                        std::vector<uint8_t>(sess->params["message"].begin(),
+                                                             sess->params["message"].end())
+                                );
+                                topicDef->insert(topicMessage);
+
+                                return sess->out.write("Stored message with ID: " + std::to_string(id))
+                                        .then([&sess] { return sess->out.flush(); })
+                                        .then([] { return seastar::stop_iteration::no; });
+                            });
+
                 }
 
                 // If parsedResult type is neither COMMAND nor MESSAGE, continue the loop
@@ -114,9 +141,9 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
     });
 }
 
-void TcpServer::cleanup_session(TcpSession* session) {
+void TcpServer::cleanup_session(TcpSession *session) {
     // Remove the session from all topic subscriptions
-    for (const auto& kv : session->params) {
+    for (const auto &kv: session->params) {
         if (kv.first == "topics") {
             std::istringstream ss(kv.second);
             std::string topic;
