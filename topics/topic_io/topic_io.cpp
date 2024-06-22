@@ -139,3 +139,90 @@ TopicIO::readRecordsFromTail(const std::string& filePath, int fromTail) {
 
     return vector;
 }
+
+
+TopicPublicStructure TopicIO::searchInArrowFiles(const std::string& filePath, boost::multiprecision::uint128_t offset) {
+    if (!fileExists(filePath)) {
+        throw std::runtime_error("Arrow file does not exist");
+    }
+
+    std::ifstream file(filePath, std::ios::binary);
+    TopicPublicStructure foundRecord;
+
+    while (true) {
+        TopicPublicStructure data;
+        try {
+            boost::archive::binary_iarchive ia(file);
+            ia >> data;
+            if (data.getOffset() == offset) {
+                foundRecord = data;
+                break;
+            }
+        } catch (const boost::archive::archive_exception& e) {
+            if (e.code == boost::archive::archive_exception::input_stream_error) {
+                // Reached end of file
+                break;
+            } else {
+                std::cerr << "Error deserializing data: " << e.what() << std::endl;
+                continue;
+            }
+        }
+    }
+
+    file.close();
+
+    if (foundRecord.getOffset() == offset) {
+        return foundRecord;
+    }
+
+    throw std::runtime_error("Record not found in Arrow files");
+}
+
+
+bool TopicIO::deleteFromArrowFiles(const std::string& filePath, boost::multiprecision::uint128_t offset) {
+    if (!fileExists(filePath)) {
+        throw std::runtime_error("Arrow file does not exist");
+    }
+
+    std::ifstream file(filePath, std::ios::binary);
+    std::vector<TopicPublicStructure> allRecords;
+
+    bool found = false;
+
+    while (true) {
+        TopicPublicStructure data;
+        try {
+            boost::archive::binary_iarchive ia(file);
+            ia >> data;
+            if (data.getOffset() == offset) {
+                found = true;
+                continue; // Skip adding this record to allRecords
+            }
+            allRecords.push_back(data);
+        } catch (const boost::archive::archive_exception& e) {
+            if (e.code == boost::archive::archive_exception::input_stream_error) {
+                // Reached end of file
+                break;
+            } else {
+                std::cerr << "Error deserializing data: " << e.what() << std::endl;
+                continue;
+            }
+        }
+    }
+
+    file.close();
+
+    if (!found) {
+        return false; // Record not found
+    }
+
+    // Rewrite the file with the remaining records
+    std::ofstream outFile(filePath, std::ios::binary | std::ios::trunc);
+    for (const auto& record : allRecords) {
+        boost::archive::binary_oarchive oa(outFile);
+        oa << record;
+    }
+
+    outFile.close();
+    return true;
+}

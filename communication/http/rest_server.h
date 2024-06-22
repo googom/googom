@@ -18,9 +18,6 @@
 class RestServer {
     seastar::httpd::http_server_control _server;
 
-    std::string decode64(const std::string &val);
-    std::string encode64(const std::string &val);
-
 public:
     RestServer();
     void start(uint16_t port);

@@ -13,10 +13,14 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/serialization.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 
 #include <iostream>
 #include <utility>
+
+#include "../../utilities/utils.h"
 
 // Adjusted to use a string for offset to work around Apache Arrow type
 // limitations
@@ -98,6 +102,23 @@ public:
     const std::vector<uint8_t>& getValue() const { return value; }
     void setValue(const std::vector<uint8_t>& value) {
         TopicPublicStructure::value = value;
+    }
+
+    std::string to_json() const {
+        boost::property_tree::ptree pt;
+        pt.put("offset", offset.str());
+        pt.put("timestamp", std::to_string(timestamp));
+        pt.put("keys", keys);
+        pt.put("headers", headers);
+        pt.put("flags", std::to_string(flags));
+
+        // Convert binary data to a base64 string
+        std::string value_base64 = Utils::encode_base64(value);
+        pt.put("value", value_base64);
+
+        std::ostringstream buf;
+        boost::property_tree::write_json(buf, pt, false);
+        return buf.str();
     }
 };
 

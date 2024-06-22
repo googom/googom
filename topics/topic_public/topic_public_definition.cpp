@@ -45,10 +45,13 @@ void TopicPublicDefinition::initialLoadBufferFromDisk() {
     }
 }
 
-void TopicPublicDefinition::insert(const TopicPublicMessage& data) {
+boost::multiprecision::uint128_t TopicPublicDefinition::insert(const TopicPublicMessage& data) {
+
+
+    auto offset=getAutoIncrementedOffset();
 
     TopicPublicStructure topicPublicStructure=TopicPublicStructure(
-                                                  getAutoIncrementedOffset(),
+                                                  offset,
                                                   Utils::getCurrentMicroseconds(),
                                                   data.getKeys(),
                                                   data.getHeaders(),
@@ -68,6 +71,8 @@ void TopicPublicDefinition::insert(const TopicPublicMessage& data) {
     if (recentBuffer.size() > bufferSize) {
         recentBuffer.erase(recentBuffer.begin());
     }
+
+    return offset;
 }
 
 
@@ -97,4 +102,59 @@ const int TopicPublicDefinition::getBufferSize() const { return bufferSize; }
 //TODO this should generate the filename
 std::string TopicPublicDefinition::topicFileNameGenerator(std::string topicName, int partition) {
     throw std::runtime_error("not implemented");
+}
+
+
+TopicPublicStructure TopicPublicDefinition::searchByOffset(const boost::multiprecision::uint128_t& offset) {
+    // Search in recentBuffer
+    for (const auto& record : recentBuffer) {
+        if (record.getOffset() == offset) {
+            return record;
+        }
+    }
+
+    // Search in oldestBuffer
+    for (const auto& record : oldestBuffer) {
+        if (record.getOffset() == offset) {
+            return record;
+        }
+    }
+
+    // If not found, search in Arrow archive files
+    if (topicIo.fileExists(diskFilePath)) {
+        return topicIo.searchInArrowFiles(diskFilePath, offset);
+    }
+
+    throw std::runtime_error("Record not found");
+}
+
+bool TopicPublicDefinition::deleteByOffset(const boost::multiprecision::uint128_t& offset) {
+    // Delete from recentBuffer
+    auto it1 = std::find_if(recentBuffer.begin(), recentBuffer.end(),
+                           [offset](const TopicPublicStructure& record) {
+                               return record.getOffset() == offset;
+                           });
+
+    if (it1 != recentBuffer.end()) {
+        recentBuffer.erase(it1);
+        //return true;
+    }
+
+    // Delete from recentBuffer
+    auto it2 = std::find_if(oldestBuffer.begin(), oldestBuffer.end(),
+                            [offset](const TopicPublicStructure& record) {
+                                return record.getOffset() == offset;
+                            });
+
+    if (it2 != oldestBuffer.end()) {
+        oldestBuffer.erase(it2);
+        //return true;
+    }
+
+    // If not found, delete from Arrow archive files
+    if (topicIo.fileExists(diskFilePath)) {
+        return topicIo.deleteFromArrowFiles(diskFilePath, offset);
+    }
+
+    return false; // Record not found
 }

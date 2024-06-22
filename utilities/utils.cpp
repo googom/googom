@@ -3,8 +3,6 @@
 //
 
 #include "utils.h"
-#include <iostream>
-#include <chrono>
 
 unsigned long long Utils::getCurrentMicroseconds() {
     // Get the current time point

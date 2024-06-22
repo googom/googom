@@ -17,7 +17,7 @@ extern seastar::distributed<DistributedTopicManager> distributedTopicManager;
 
 
 
-TcpServer::TcpServer() {}
+TcpServer::TcpServer() = default;
 
 seastar::future<> TcpServer::start(uint16_t port) {
     seastar::listen_options lo;
@@ -45,6 +45,7 @@ seastar::future<> TcpServer::start(uint16_t port) {
  * TEST messages
  * COMMAND: user=myuser, topics=topic1 topic2
  * MESSAGE: topic=topic1 | [\"some text\"]
+ * MESSAGE: topic=message | [\"some text\"]
  */
 seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
     // Create a new session for each connection
@@ -123,15 +124,13 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
                         std::cout << "Key: " << kv.first << ", Value: " << kv.second << std::endl;
                     }
 
-                    int id = _store.store_message(parsedResult.message, parsedResult.keyValuePairs["topic"]);
-
 
                     // Accessing the DistributedTopicManager to store message
                     std::string topic = parsedResult.keyValuePairs["topic"];
                     std::string filename = topic + ".arrow";
                     return distributedTopicManager.local().getOrCreateTopicPublicDefinition(
                                     topic, 0, 1024, filename)
-                            .then([id, &sess](std::shared_ptr<TopicPublicDefinition> topicDef) {
+                            .then([&sess](const std::shared_ptr<TopicPublicDefinition>& topicDef) {
                                 // Insert the message into the topic
                                 TopicPublicMessage topicMessage(
                                         topicDef->getTopicName(),
@@ -140,9 +139,9 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
                                         std::vector<uint8_t>(sess->params["message"].begin(),
                                                              sess->params["message"].end())
                                 );
-                                topicDef->insert(topicMessage);
+                                auto offset=topicDef->insert(topicMessage);
 
-                                return sess->out.write("Stored message with ID: " + std::to_string(id))
+                                return sess->out.write("Stored message with ID: " + offset.str())
                                         .then([&sess] { return sess->out.flush(); })
                                         .then([] { return seastar::stop_iteration::no; });
                             });

@@ -42,7 +42,7 @@ public:
       int bufferSize,
       std::string diskFilePath);
 
-    void insert(const TopicPublicMessage& data);
+    boost::multiprecision::uint128_t insert(const TopicPublicMessage& data);
 
 
     // Callback function to notify about new messages
@@ -65,7 +65,8 @@ public:
     const std::string& getDiskFilePath() const;
     const int getBufferSize() const;
 
-
+    TopicPublicStructure searchByOffset(const boost::multiprecision::uint128_t& offset);
+    bool deleteByOffset(const boost::multiprecision::uint128_t& offset);
 };
 
 #endif // GOOGOM_TOPIC_PUBLIC_DEFINITION_H

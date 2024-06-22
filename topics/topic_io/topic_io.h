@@ -26,6 +26,9 @@ public:
     void writeToDisk(const std::string& filePath, const TopicPublicStructure& data);
     void closeSharedFile();
     virtual ~TopicIO();
+
+    TopicPublicStructure searchInArrowFiles(const std::string& filePath, boost::multiprecision::uint128_t offset);
+    bool deleteFromArrowFiles(const std::string& filePath, boost::multiprecision::uint128_t offset);
 };
 
 #endif // GOOGOM_TOPIC_IO_H

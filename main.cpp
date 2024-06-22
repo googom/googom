@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
             ("config,c", boost::program_options::value<std::string>(), "this is for tcp port");
 
 
-    RestServer rest();
-    TcpServer tcpServer();
+    RestServer rest;
+    TcpServer tcpServer;
 
 
     return app.run(argc, argv, [&app, &rest, &tcpServer]() -> seastar::future<> {
