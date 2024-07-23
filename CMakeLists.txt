@@ -84,6 +84,8 @@ set(SOURCES
         communication/communication_utils/communication_utils.h
         managers/distributed_topic_manager.cpp
         managers/distributed_topic_manager.h
+        managers/notification_manager.cpp
+        managers/notification_manager.h
 )
 
 # Add the executable target

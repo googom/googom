@@ -15,25 +15,48 @@
 // Include DistributedTopicManager
 extern seastar::distributed<DistributedTopicManager> distributedTopicManager;
 
-
-
 TcpServer::TcpServer() = default;
 
+// TcpServer::start function
 seastar::future<> TcpServer::start(uint16_t port) {
     seastar::listen_options lo;
     lo.reuse_address = true;
     auto listen_addr = seastar::make_ipv4_address({port});
-    return seastar::do_with(seastar::engine().listen(listen_addr, lo), [this, &port](auto &server) {
-        std::cout << "TCP server listening on port " << port << "\n";
-        return seastar::keep_doing([this, &server] {
-            return server.accept().then([this](seastar::accept_result ar) {
-                return handle_tcp_connection(std::move(ar.connection), ar.remote_address);
-            });
-        }).finally([&server] {
+    auto server = seastar::engine().listen(listen_addr, lo);
+    std::cout << "TCP server listening on port " << port << "\n";
+
+    // Use a while (true) loop to continuously accept connections
+    return seastar::do_with(std::move(server), [this](auto& server) {
+        return seastar::do_until(
+                [this] { return false; },
+                [this, &server] {
+                    return server.accept().then([this](seastar::accept_result ar) {
+                        // Handle the accepted connection asynchronously
+                        (void)handle_tcp_connection(std::move(ar.connection), ar.remote_address).handle_exception([](std::exception_ptr eptr) {
+                            try {
+                                std::rethrow_exception(eptr);
+                            } catch (const std::exception &e) {
+                                std::cerr << "Failed to handle connection: " << e.what() << "\n";
+                            }
+                        });
+                        // Continue the loop
+                        return seastar::make_ready_future<>();
+                    }).handle_exception([](std::exception_ptr eptr) {
+                        try {
+                            std::rethrow_exception(eptr);
+                        } catch (const std::exception &e) {
+                            std::cerr << "Failed to accept connection: " << e.what() << "\n";
+                        }
+                        // Continue the loop even if accept fails
+                        return seastar::make_ready_future<>();
+                    });
+                }
+        ).finally([&server] {
             server.abort_accept();
         });
     });
 }
+
 
 /*
  *  HOW a message should look like
@@ -43,10 +66,37 @@ seastar::future<> TcpServer::start(uint16_t port) {
  *  // types in command: WRITER, READER, BROKER
  *
  * TEST messages
- * COMMAND: user=myuser, topics=topic1 topic2
+ * COMMAND: user=myuser, topics=topic1 topic2 message, type=reader
  * MESSAGE: topic=topic1 | [\"some text\"]
  * MESSAGE: topic=message | [\"some text\"]
  */
+
+seastar::future<> TcpServer::debug_handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
+    auto in = socket.input();
+    auto out = socket.output();
+
+    return seastar::do_with(std::move(in), std::move(out), [this](auto& in, auto& out) {
+        return seastar::repeat([&in, &out] {
+            return in.read().then([&out](seastar::temporary_buffer<char> buf) {
+                if (buf.empty()) {
+                    return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
+                }
+                return out.write(buf.get(), buf.size()).then([&out] {
+                    return out.flush().then([] {
+                        return seastar::stop_iteration::no;
+                    });
+                });
+            });
+        }).finally([&in, &out] {
+            return out.close().finally([&in] {
+                return in.close();
+            });
+        });
+    });
+}
+
+
+
 seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
     // Create a new session for each connection
     auto session = std::make_unique<TcpSession>(std::move(socket));
@@ -90,7 +140,7 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
 
                         if (kv.first == "type") {
                             std::istringstream ss(kv.second);
-                            ss>>type;
+                            ss >> type;
                         }
 
                         // Handle topic subscription
@@ -124,7 +174,6 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
                         std::cout << "Key: " << kv.first << ", Value: " << kv.second << std::endl;
                     }
 
-
                     // Accessing the DistributedTopicManager to store message
                     std::string topic = parsedResult.keyValuePairs["topic"];
                     std::string filename = topic + ".arrow";
@@ -139,13 +188,12 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
                                         std::vector<uint8_t>(sess->params["message"].begin(),
                                                              sess->params["message"].end())
                                 );
-                                auto offset=topicDef->insert(topicMessage);
+                                auto offset = topicDef->insert(topicMessage);
 
                                 return sess->out.write("Stored message with ID: " + offset.str())
                                         .then([&sess] { return sess->out.flush(); })
                                         .then([] { return seastar::stop_iteration::no; });
                             });
-
                 }
 
                 // If parsedResult type is neither COMMAND nor MESSAGE, continue the loop
@@ -160,8 +208,7 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
 }
 
 void TcpServer::cleanup_session(TcpSession *session) {
-    // Remove the session from all topic subscriptions
-    for (const auto &kv: session->params) {
+    for (const auto &kv : session->params) {
         if (kv.first == "topics") {
             std::istringstream ss(kv.second);
             std::string topic;
@@ -171,7 +218,6 @@ void TcpServer::cleanup_session(TcpSession *session) {
         }
     }
 }
-
 
 std::string TcpServer::intToIPv4(seastar::net::packed<uint32_t> ip) {
     // Break down the integer into its octets
@@ -187,28 +233,15 @@ std::string TcpServer::intToIPv4(seastar::net::packed<uint32_t> ip) {
            std::to_string(octet4);
 }
 
-void TcpServer::notify_subscribers(const std::string &topic, const std::string &message) {
-    if (_subscriptions.find(topic) != _subscriptions.end()) {
-        for (auto session: _subscriptions[topic]) {
-            session->out.write("New message in topic " + topic + ": " + message + "\n").then([session] {
-                return session->out.flush();
-            }).handle_exception([](std::exception_ptr eptr) {
-                try {
-                    std::rethrow_exception(eptr);
-                } catch (const std::exception &e) {
-                    std::cerr << "Error notifying subscriber: " << e.what() << std::endl;
-                }
-            });
-        }
-    }
+seastar::future<> TcpServer::add_subscription(const std::string &topic, TcpSession *session) {
+    return _notification_manager.add_subscription(topic, session).then([topic] {
+        std::cout << "Added subscription for topic: " << topic << "\n";
+    });
 }
 
-void TcpServer::add_subscription(const std::string &topic, TcpSession *session) {
-    _subscriptions[topic].insert(session);
+seastar::future<> TcpServer::remove_subscription(const std::string &topic, TcpSession *session) {
+    return _notification_manager.remove_subscription(topic, session).then([topic] {
+        std::cout << "Removed subscription for topic: " << topic << "\n";
+    });
 }
 
-void TcpServer::remove_subscription(const std::string &topic, TcpSession *session) {
-    if (_subscriptions.find(topic) != _subscriptions.end()) {
-        _subscriptions[topic].erase(session);
-    }
-}

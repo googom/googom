@@ -10,12 +10,9 @@
 #include <seastar/net/socket_defs.hh>
 #include <seastar/net/inet_address.hh>
 #include "tcp_session.h"
+#include "../../managers/notification_manager.h"
 
 class TcpServer {
-    std::unordered_map<std::string, std::unordered_set<TcpSession*>> _subscriptions;
-    void cleanup_session(TcpSession* session);
-
-
 public:
     explicit TcpServer();
     seastar::future<> start(uint16_t port);
@@ -23,10 +20,21 @@ public:
 
     std::string intToIPv4(seastar::net::packed<uint32_t> ip);
 
-    // Method to notify clients about new messages
-    void notify_subscribers(const std::string& topic, const std::string& message);
-    void add_subscription(const std::string& topic, TcpSession* session);
-    void remove_subscription(const std::string& topic, TcpSession* session);
+    seastar::future<> add_subscription(const std::string& topic, TcpSession* session);
+    seastar::future<> remove_subscription(const std::string& topic, TcpSession* session);
+
+    seastar::future<> debug_handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr);
+
+private:
+    std::unordered_map<std::string, std::unordered_set<TcpSession*>> _subscriptions;
+    void cleanup_session(TcpSession* session);
+    NotificationManager _notification_manager;
 };
 
+
+
 #endif // GOOGOM_TCP_SERVER_H
+
+
+
+
