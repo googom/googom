@@ -26,19 +26,21 @@ seastar::future<> TcpServer::start(uint16_t port) {
     std::cout << "TCP server listening on port " << port << "\n";
 
     // Use a while (true) loop to continuously accept connections
-    return seastar::do_with(std::move(server), [this](auto& server) {
+    return seastar::do_with(std::move(server), [this](auto &server) {
         return seastar::do_until(
                 [this] { return false; },
                 [this, &server] {
                     return server.accept().then([this](seastar::accept_result ar) {
                         // Handle the accepted connection asynchronously
-                        (void)handle_tcp_connection(std::move(ar.connection), ar.remote_address).handle_exception([](std::exception_ptr eptr) {
-                            try {
-                                std::rethrow_exception(eptr);
-                            } catch (const std::exception &e) {
-                                std::cerr << "Failed to handle connection: " << e.what() << "\n";
-                            }
-                        });
+                        (void) debug_handle_tcp_connection(std::move(ar.connection),
+                                                           ar.remote_address).handle_exception(
+                                [](std::exception_ptr eptr) {
+                                    try {
+                                        std::rethrow_exception(eptr);
+                                    } catch (const std::exception &e) {
+                                        std::cerr << "Failed to handle connection: " << e.what() << "\n";
+                                    }
+                                });
                         // Continue the loop
                         return seastar::make_ready_future<>();
                     }).handle_exception([](std::exception_ptr eptr) {
@@ -71,35 +73,115 @@ seastar::future<> TcpServer::start(uint16_t port) {
  * MESSAGE: topic=message | [\"some text\"]
  */
 
-seastar::future<> TcpServer::debug_handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
+seastar::future<>
+TcpServer::debug_handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
     auto in = socket.input();
     auto out = socket.output();
 
-    return seastar::do_with(std::move(in), std::move(out), [this](auto& in, auto& out) {
-        return seastar::repeat([&in, &out] {
-            return in.read().then([&out](seastar::temporary_buffer<char> buf) {
-                if (buf.empty()) {
-                    return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
-                }
-                return out.write(buf.get(), buf.size()).then([&out] {
-                    return out.flush().then([] {
-                        return seastar::stop_iteration::no;
-                    });
-                });
-            });
-        }).finally([&in, &out] {
-            return out.close().finally([&in] {
-                return in.close();
-            });
-        });
-    });
+    std::map<std::string, std::string> params;
+
+    if (addr.addr().is_ipv4()) {
+        params["client_address_ipv4"] = intToIPv4(addr.addr().as_ipv4_address().ip);
+
+    } else {
+        params["client_address_ipv6"] = "NONE";
+    }
+
+    if (addr.addr().is_ipv6()) {
+        std::string str(reinterpret_cast<char *>(addr.addr().as_ipv6_address().ip.begin()),
+                        addr.addr().as_ipv6_address().ip.size());
+        params["client_address_ipv6"] = str;
+    } else {
+        params["client_address_ipv6"] = "NONE";
+    }
+
+    std::cout << "Request came from ipv4: " << params["client_address_ipv4"] << "\n";
+    std::cout << "Request came from ipv6: " << params["client_address_ipv6"] << "\n";
+
+    return seastar::do_with(std::move(in), std::move(out), std::move(params),
+                            [this](auto &in, auto &out, auto &params) {
+                                return seastar::repeat([&in, &out, &params] {
+                                    return in.read().then([&out, &params](seastar::temporary_buffer<char> buf) {
+                                        if (buf.empty()) {
+                                            return seastar::make_ready_future<seastar::stop_iteration>(
+                                                    seastar::stop_iteration::yes);
+                                        }
+
+                                        std::string message(buf.get(), buf.size());
+                                        std::vector<std::string> topicsToSubscribe;
+                                        std::string type;
+
+                                        auto parsedResult = parseInput(message);
+
+                                        if (parsedResult.type == MessageType::COMMAND) {
+                                            for (const auto &kv: parsedResult.keyValuePairs) {
+                                                std::cout << "Key: " << kv.first << ", Value: " << kv.second
+                                                          << std::endl;
+                                                params[kv.first] = kv.second;
+
+                                                if (kv.first == "type") {
+                                                    std::istringstream ss(kv.second);
+                                                    ss >> type;
+                                                }
+
+                                                // Handle topic subscription
+                                                if (kv.first == "topics") {
+                                                    std::istringstream ss(kv.second);
+                                                    std::string topic;
+
+                                                    while (ss >> topic) {
+                                                        topicsToSubscribe.push_back(topic);
+                                                        std::cout << "Topic subscribed " << topic << "\n";
+                                                    }
+                                                }
+                                            }
+
+                                            //TODO broker should be added
+                                            if (type == "reader") {
+                                                if (!topicsToSubscribe.empty()) {
+                                                    for (const auto &topic: topicsToSubscribe) {
+                                                        //add_subscription(topic, sess.get());
+                                                    }
+                                                }
+                                            }
+                                        } else if (parsedResult.type == MessageType::MESSAGE) {
+                                            // TODO: Check if topic is set
+                                            // TODO: Check if user has permissions
+                                            // TODO: Real topic writing
+
+                                            for (const auto &kv: parsedResult.keyValuePairs) {
+                                                std::cout << "Key: " << kv.first << ", Value: " << kv.second
+                                                          << std::endl;
+                                            }
+
+                                            // Accessing the DistributedTopicManager to store message
+                                            std::string topic = parsedResult.keyValuePairs["topic"];
+                                            std::string filename = topic + ".arrow";
+                                            std::cout << "Message: " << parsedResult.message << "\n";
+                                        }
+
+                                        return out.write(buf.get(), buf.size()).then([&out] {
+                                            return out.flush().then([] {
+                                                return seastar::stop_iteration::no;
+                                            });
+                                        });
+                                    });
+                                }).finally([&in, &out] {
+                                    return out.close().finally([&in] {
+                                        return in.close();
+                                    });
+                                });
+                            });
 }
 
 
-
 seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr) {
+
+    auto in = socket.input();
+    auto out = socket.output();
+
     // Create a new session for each connection
-    auto session = std::make_unique<TcpSession>(std::move(socket));
+    auto session = seastar::make_shared<TcpSession>();
 
     if (addr.addr().is_ipv4()) {
         session->params["client_address_ipv4"] = intToIPv4(addr.addr().as_ipv4_address().ip);
@@ -115,100 +197,119 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
         session->params["client_address_ipv6"] = "NONE";
     }
 
-    return seastar::do_with(std::move(session), [this](auto &sess) {
-        return seastar::repeat([&sess, this] {
-            return sess->in.read().then([&sess, this](seastar::temporary_buffer<char> buf) {
-                if (!buf) {
-                    // No more data to read, stop the iteration
-                    return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::yes);
-                }
+    return seastar::do_with(std::move(in), std::move(out), std::move(session),
+                            [this](auto &in, auto &out, auto &sess) {
+                                return seastar::repeat([&in, &out, &sess, this] {
+                                    return in.read().then([&sess, &out, this](seastar::temporary_buffer<char> buf) {
+                                        if (!buf) {
+                                            // No more data to read, stop the iteration
+                                            return seastar::make_ready_future<seastar::stop_iteration>(
+                                                    seastar::stop_iteration::yes);
+                                        }
 
-                std::cout << "Request came from ipv4: " << sess->params["client_address_ipv4"] << "\n";
-                std::cout << "Request came from ipv6: " << sess->params["client_address_ipv6"] << "\n";
-                std::string message(buf.get(), buf.size());
-                //IDLE CONNECTION TILL there is a command!!
-                //ALL the sessions should be pushed to the internal topics
+                                        std::cout << "Request came from ipv4: " << sess->params["client_address_ipv4"]
+                                                  << "\n";
+                                        std::cout << "Request came from ipv6: " << sess->params["client_address_ipv6"]
+                                                  << "\n";
+                                        std::string message(buf.get(), buf.size());
+                                        //IDLE CONNECTION TILL there is a command!!
+                                        //ALL the sessions should be pushed to the internal topics
 
-                std::vector<std::string> topicsToSubscribe;
-                std::string type;
+                                        std::vector<std::string> topicsToSubscribe;
+                                        std::string type;
 
-                auto parsedResult = parseInput(message);
-                if (parsedResult.type == MessageType::COMMAND) {
-                    for (const auto &kv: parsedResult.keyValuePairs) {
-                        std::cout << "Key: " << kv.first << ", Value: " << kv.second << std::endl;
-                        sess->params[kv.first] = kv.second;
+                                        auto parsedResult = parseInput(message);
+                                        if (parsedResult.type == MessageType::COMMAND) {
+                                            for (const auto &kv: parsedResult.keyValuePairs) {
+                                                std::cout << "Key: " << kv.first << ", Value: " << kv.second
+                                                          << std::endl;
+                                                sess->params[kv.first] = kv.second;
 
-                        if (kv.first == "type") {
-                            std::istringstream ss(kv.second);
-                            ss >> type;
-                        }
+                                                if (kv.first == "type") {
+                                                    std::istringstream ss(kv.second);
+                                                    ss >> type;
+                                                }
 
-                        // Handle topic subscription
-                        if (kv.first == "topics") {
-                            std::istringstream ss(kv.second);
-                            std::string topic;
+                                                // Handle topic subscription
+                                                if (kv.first == "topics") {
+                                                    std::istringstream ss(kv.second);
+                                                    std::string topic;
 
-                            while (ss >> topic) {
-                                topicsToSubscribe.push_back(topic);
-                            }
-                        }
-                    }
+                                                    while (ss >> topic) {
+                                                        topicsToSubscribe.push_back(topic);
+                                                    }
+                                                }
+                                            }
 
-                    //TODO broker should be added
-                    if(type=="reader"){
-                        if(!topicsToSubscribe.empty()){
-                            for(const auto& topic:topicsToSubscribe) {
-                                add_subscription(topic, sess.get());
-                            }
-                        }
-                    }
+                                            //TODO broker should be added
+                                            if (type == "reader") {
+                                                if (!topicsToSubscribe.empty()) {
+                                                    for (const auto &topic: topicsToSubscribe) {
+                                                        add_subscription(topic, sess.get());
+                                                    }
+                                                }
+                                            }
 
-                    // Continue the loop after processing COMMAND
-                    return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::no);
-                } else if (parsedResult.type == MessageType::MESSAGE) {
-                    // TODO: Check if topic is set
-                    // TODO: Check if user has permissions
-                    // TODO: Real topic writing
+                                            // Continue the loop after processing COMMAND
+                                            return seastar::make_ready_future<seastar::stop_iteration>(
+                                                    seastar::stop_iteration::no);
+                                        } else if (parsedResult.type == MessageType::MESSAGE) {
+                                            // TODO: Check if topic is set
+                                            // TODO: Check if user has permissions
+                                            // TODO: Real topic writing
 
-                    for (const auto &kv: parsedResult.keyValuePairs) {
-                        std::cout << "Key: " << kv.first << ", Value: " << kv.second << std::endl;
-                    }
+                                            for (const auto &kv: parsedResult.keyValuePairs) {
+                                                std::cout << "Key: " << kv.first << ", Value: " << kv.second
+                                                          << std::endl;
+                                            }
 
-                    // Accessing the DistributedTopicManager to store message
-                    std::string topic = parsedResult.keyValuePairs["topic"];
-                    std::string filename = topic + ".arrow";
-                    return distributedTopicManager.local().getOrCreateTopicPublicDefinition(
-                                    topic, 0, 1024, filename)
-                            .then([&sess](const std::shared_ptr<TopicPublicDefinition>& topicDef) {
-                                // Insert the message into the topic
-                                TopicPublicMessage topicMessage(
-                                        topicDef->getTopicName(),
-                                        "keys_placeholder",
-                                        "headers_placeholder",
-                                        std::vector<uint8_t>(sess->params["message"].begin(),
-                                                             sess->params["message"].end())
-                                );
-                                auto offset = topicDef->insert(topicMessage);
+                                            // Accessing the DistributedTopicManager to store message
+                                            std::string topic = parsedResult.keyValuePairs["topic"];
+                                            std::string filename = topic + ".arrow";
+                                            return seastar::make_ready_future().then([&out, &sess] {
+                                                return out.write("Stored message with ID: offset.str()")
+                                                        .then([&out, &sess] {
+                                                            return out.flush();
+                                                        }).then([] {
+                                                            return seastar::stop_iteration::no;
+                                                        });
+                                            });
+//                    return distributedTopicManager.local().getOrCreateTopicPublicDefinition(
+//                                    topic, 0, 1024, filename)
+//                            .then([&sess](const std::shared_ptr<TopicPublicDefinition> &topicDef) {
+//                                // Insert the message into the topic
+//                                TopicPublicMessage topicMessage(
+//                                        topicDef->getTopicName(),
+//                                        "keys_placeholder",
+//                                        "headers_placeholder",
+//                                        std::vector<uint8_t>(sess->params["message"].begin(),
+//                                                             sess->params["message"].end())
+//                                );
+//                                auto offset = topicDef->insert(topicMessage);
+//
+//                                return sess->out.write("Stored message with ID: " + offset.str())
+//                                        .then([&sess] { return sess->out.flush(); })
+//                                        .then([] { return seastar::stop_iteration::no; });
+//                            });
+                                        }
 
-                                return sess->out.write("Stored message with ID: " + offset.str())
-                                        .then([&sess] { return sess->out.flush(); })
-                                        .then([] { return seastar::stop_iteration::no; });
+                                        // If parsedResult type is neither COMMAND nor MESSAGE, continue the loop
+                                        return seastar::make_ready_future<seastar::stop_iteration>(
+                                                seastar::stop_iteration::no);
+                                    });
+
+
+
+                                }).finally([&out, &sess, this] {
+                                    // Cleanup the session on disconnection
+                                    cleanup_session(sess.get());
+                                    return out.close();
+                                });
                             });
-                }
-
-                // If parsedResult type is neither COMMAND nor MESSAGE, continue the loop
-                return seastar::make_ready_future<seastar::stop_iteration>(seastar::stop_iteration::no);
-            });
-        }).finally([&sess, this] {
-            // Cleanup the session on disconnection
-            cleanup_session(sess.get());
-            return sess->out.close();
-        });
-    });
 }
 
 void TcpServer::cleanup_session(TcpSession *session) {
-    for (const auto &kv : session->params) {
+    for (const auto &kv: session->params) {
         if (kv.first == "topics") {
             std::istringstream ss(kv.second);
             std::string topic;

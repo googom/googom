@@ -12,16 +12,22 @@
 #include <seastar/net/api.hh>
 #include <iostream>
 #include <map>
+#include <queue>
 
-class TcpSession {
+class TcpSession : public seastar::enable_shared_from_this<TcpSession> {
 public:
-    seastar::connected_socket socket;
-    seastar::input_stream<char> in;
-    seastar::output_stream<char> out;
     std::map<std::string, std::string> params;  // Session parameters
+    std::queue<std::string> message_queue;      // Queue to hold messages to be sent
 
-    TcpSession(seastar::connected_socket cs)
-            : socket(std::move(cs)), in(socket.input()), out(socket.output()) {}
+    // Function to enqueue messages
+    void enqueue_message(const std::string &message) {
+        message_queue.push(message);
+    }
+
+    // Function to check if there are messages pending
+    bool has_pending_messages() const {
+        return !message_queue.empty();
+    }
 };
 
 
