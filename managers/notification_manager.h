@@ -1,3 +1,7 @@
+//
+// Created by root on 6/22/24.
+//
+
 #ifndef GOOGOM_NOTIFICATION_MANAGER_H
 #define GOOGOM_NOTIFICATION_MANAGER_H
 
@@ -5,6 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
+#include <seastar/core/sharded.hh>
 
 class NotificationManager {
 public:
@@ -15,5 +20,7 @@ public:
 private:
     std::unordered_map<std::string, std::unordered_set<TcpSession*>> _subscriptions;
 };
+
+extern seastar::sharded<NotificationManager> notificationManager;
 
 #endif //GOOGOM_NOTIFICATION_MANAGER_H

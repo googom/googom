@@ -4,8 +4,9 @@
 
 #include "notification_manager.h"
 
+seastar::sharded<NotificationManager> notificationManager;
+
 seastar::future<> NotificationManager::add_subscription(const std::string &topic, TcpSession *session) {
-    std::cout << "Added subscription for topic: " << topic << std::endl;
     _subscriptions[topic].insert(session);
     return seastar::make_ready_future<>();
 }
@@ -19,7 +20,6 @@ seastar::future<> NotificationManager::remove_subscription(const std::string &to
 }
 
 seastar::future<> NotificationManager::notify_subscribers(const std::string &topic, const std::string &message) {
-
     if (_subscriptions.find(topic) != _subscriptions.end()) {
         std::cout << "Notifying subscribers for topic: " << topic << std::endl;
         for (auto session: _subscriptions[topic]) {

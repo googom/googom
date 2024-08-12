@@ -26,9 +26,8 @@ public:
     seastar::future<> debug_handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr);
 
 private:
-    std::unordered_map<std::string, std::unordered_set<TcpSession*>> _subscriptions;
     void cleanup_session(TcpSession* session);
-    NotificationManager _notification_manager;
+    std::vector<uint8_t> stringToVector(const std::string& str);
 };
 
 

@@ -7,6 +7,11 @@
 #include <seastar/net/api.hh>
 #include <seastar/net/ip.hh>
 
+#include <string>
+#include <vector>
+#include <cstdint>
+#include <iostream>
+
 #include "../communication_utils/communication_utils.h"
 #include "../../topics/topic_public/topic_public_definition.h"
 #include "../../topics/topic_public/topic_public_message.h"
@@ -14,6 +19,8 @@
 
 // Include DistributedTopicManager
 extern seastar::distributed<DistributedTopicManager> distributedTopicManager;
+
+extern seastar::sharded<NotificationManager> notificationManager;
 
 TcpServer::TcpServer() = default;
 
@@ -32,8 +39,8 @@ seastar::future<> TcpServer::start(uint16_t port) {
                 [this, &server] {
                     return server.accept().then([this](seastar::accept_result ar) {
                         // Handle the accepted connection asynchronously
-                        (void) debug_handle_tcp_connection(std::move(ar.connection),
-                                                           ar.remote_address).handle_exception(
+                        (void) handle_tcp_connection(std::move(ar.connection),
+                                                     ar.remote_address).handle_exception(
                                 [](std::exception_ptr eptr) {
                                     try {
                                         std::rethrow_exception(eptr);
@@ -200,6 +207,19 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
     return seastar::do_with(std::move(in), std::move(out), std::move(session),
                             [this](auto &in, auto &out, auto &sess) {
                                 return seastar::repeat([&in, &out, &sess, this] {
+
+                                    // Send messages from the queue
+                                    if (sess->has_pending_messages()) {
+                                        auto message = sess->message_queue.front();
+                                        sess->message_queue.pop();
+                                        std::cout << "Sending message: " << message << " to session: " << sess.get() << std::endl; //DEBUG
+                                        return out.write(message).then([&out] {
+                                            return out.flush();
+                                        }).then([] {
+                                            return seastar::stop_iteration::no;
+                                        });
+                                    }
+
                                     return in.read().then([&sess, &out, this](seastar::temporary_buffer<char> buf) {
                                         if (!buf) {
                                             // No more data to read, stop the iteration
@@ -266,39 +286,40 @@ seastar::future<> TcpServer::handle_tcp_connection(seastar::connected_socket soc
                                             // Accessing the DistributedTopicManager to store message
                                             std::string topic = parsedResult.keyValuePairs["topic"];
                                             std::string filename = topic + ".arrow";
-                                            return seastar::make_ready_future().then([&out, &sess] {
-                                                return out.write("Stored message with ID: offset.str()")
-                                                        .then([&out, &sess] {
-                                                            return out.flush();
-                                                        }).then([] {
-                                                            return seastar::stop_iteration::no;
-                                                        });
-                                            });
-//                    return distributedTopicManager.local().getOrCreateTopicPublicDefinition(
-//                                    topic, 0, 1024, filename)
-//                            .then([&sess](const std::shared_ptr<TopicPublicDefinition> &topicDef) {
-//                                // Insert the message into the topic
-//                                TopicPublicMessage topicMessage(
-//                                        topicDef->getTopicName(),
-//                                        "keys_placeholder",
-//                                        "headers_placeholder",
-//                                        std::vector<uint8_t>(sess->params["message"].begin(),
-//                                                             sess->params["message"].end())
-//                                );
-//                                auto offset = topicDef->insert(topicMessage);
-//
-//                                return sess->out.write("Stored message with ID: " + offset.str())
-//                                        .then([&sess] { return sess->out.flush(); })
-//                                        .then([] { return seastar::stop_iteration::no; });
-//                            });
+                                            /* return seastar::make_ready_future().then([&out, &sess] {
+                                                 return out.write("Stored message with ID: offset.str()")
+                                                         .then([&out, &sess] {
+                                                             return out.flush();
+                                                         }).then([] {
+                                                             return seastar::stop_iteration::no;
+                                                         });
+                                             });*/
+                                            return distributedTopicManager.local().getOrCreateTopicPublicDefinition(
+                                                            topic, 0, 1024, filename)
+                                                    .then([this, &out, &sess, parsedResult](
+                                                            const std::shared_ptr<TopicPublicDefinition> &topicDef) {
+                                                        // Insert the message into the topic
+                                                        TopicPublicMessage
+                                                                topicMessage(
+                                                                topicDef->getTopicName(),
+                                                                "keys_placeholder",
+                                                                "headers_placeholder",
+                                                                stringToVector(parsedResult.message)
+                                                        );
+                                                        auto offset = topicDef->insert(topicMessage);
+
+                                                        return out.write(
+                                                                        "Stored message with ID: " + offset.str() +
+                                                                        "\n")
+                                                                .then([&out, &sess] { return out.flush(); })
+                                                                .then([] { return seastar::stop_iteration::no; });
+                                                    });
                                         }
 
                                         // If parsedResult type is neither COMMAND nor MESSAGE, continue the loop
                                         return seastar::make_ready_future<seastar::stop_iteration>(
                                                 seastar::stop_iteration::no);
                                     });
-
-
 
                                 }).finally([&out, &sess, this] {
                                     // Cleanup the session on disconnection
@@ -335,14 +356,23 @@ std::string TcpServer::intToIPv4(seastar::net::packed<uint32_t> ip) {
 }
 
 seastar::future<> TcpServer::add_subscription(const std::string &topic, TcpSession *session) {
-    return _notification_manager.add_subscription(topic, session).then([topic] {
+    return notificationManager.invoke_on_all([topic, session](NotificationManager &nm) {
+        return nm.add_subscription(topic, session);
+    }).then([topic] {
         std::cout << "Added subscription for topic: " << topic << "\n";
     });
 }
 
 seastar::future<> TcpServer::remove_subscription(const std::string &topic, TcpSession *session) {
-    return _notification_manager.remove_subscription(topic, session).then([topic] {
+    return notificationManager.invoke_on_all([topic, session](NotificationManager &nm) {
+        return nm.remove_subscription(topic, session);
+    }).then([topic] {
         std::cout << "Removed subscription for topic: " << topic << "\n";
     });
+}
+
+// Function to convert std::string to std::vector<uint8_t>
+std::vector<uint8_t> TcpServer::stringToVector(const std::string& str) {
+    return std::vector<uint8_t>(str.begin(), str.end());
 }
 

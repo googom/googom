@@ -72,6 +72,15 @@ boost::multiprecision::uint128_t TopicPublicDefinition::insert(const TopicPublic
         recentBuffer.erase(recentBuffer.begin());
     }
 
+    // Convert the message value from vector<unsigned char> to string
+    std::string message(data.getValue().begin(), data.getValue().end());
+    std::cout << "Inserting message: " << message << std::endl; //DEBUG
+
+    // Notify subscribers about the new message if the callback is set
+    if (on_message_stored) {
+        on_message_stored(topicName, message);
+    }
+
     return offset;
 }
 
