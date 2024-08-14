@@ -23,6 +23,7 @@ RUN apt-get -y update \
                            wget \
                            tar \
                            bzip2 \
+                           liburcu-dev \
                            clang-18 \
                            clang++-18
 

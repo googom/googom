@@ -10,7 +10,6 @@
 #include <seastar/net/socket_defs.hh>
 #include <seastar/net/inet_address.hh>
 #include "tcp_session.h"
-#include "../../managers/notification_manager.h"
 
 class TcpServer {
 public:
@@ -20,10 +19,8 @@ public:
 
     std::string intToIPv4(seastar::net::packed<uint32_t> ip);
 
-    seastar::future<> add_subscription(const std::string& topic, TcpSession* session);
-    seastar::future<> remove_subscription(const std::string& topic, TcpSession* session);
-
-    seastar::future<> debug_handle_tcp_connection(seastar::connected_socket socket, seastar::socket_address addr);
+    void addSubscription(const std::string& topic, TcpSession* session);
+    void removeSubscription(const std::string& topic, TcpSession* session);
 
 private:
     void cleanup_session(TcpSession* session);

@@ -17,7 +17,6 @@
 
 // Declare a sharded instance of DistributedTopicManager
 seastar::distributed<DistributedTopicManager> distributedTopicManager;
-extern seastar::sharded<NotificationManager> notificationManager;
 
 int main(int argc, char **argv) {
     //!!The first stage

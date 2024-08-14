@@ -36,6 +36,8 @@ find_package(Seastar REQUIRED)
 find_package(Arrow REQUIRED)
 find_package(Boost REQUIRED COMPONENTS serialization unit_test_framework program_options thread chrono atomic)
 
+set(URCU_LIBRARIES "-lurcu-memb -lurcu-common -lurcu-cds")
+
 # Ensure Boost libraries are static
 foreach(boost_lib ${Boost_LIBRARIES})
     if(boost_lib MATCHES ".+\\.so")
@@ -84,8 +86,9 @@ set(SOURCES
         communication/communication_utils/communication_utils.h
         managers/distributed_topic_manager.cpp
         managers/distributed_topic_manager.h
-        managers/notification_manager.cpp
-        managers/notification_manager.h
+        communication/tcp/subscription.h
+        managers/subscription_manager.cpp
+        managers/subscription_manager.h
 )
 
 # Add the executable target
@@ -136,7 +139,7 @@ else()
 endif()
 
 # Link the executable with the determined libraries
-target_link_libraries(Googom PRIVATE ${ARROW_LIB} ${SEASTAR_LIB} ${Boost_LIBRARIES} ${SSL_LIB} ${CRYPTO_LIB} -latomic -ldl -lpthread -lrt)
+target_link_libraries(Googom PRIVATE ${ARROW_LIB} ${SEASTAR_LIB} ${Boost_LIBRARIES} ${SSL_LIB} ${CRYPTO_LIB} ${URCU_LIBRARIES} -latomic -ldl -lpthread -lrt)
 
 # Force static linking for Boost
 foreach(boost_lib ${Boost_LIBRARIES})

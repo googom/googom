@@ -5,6 +5,10 @@
 #ifndef GOOGOM_TCP_SESSION_H
 #define GOOGOM_TCP_SESSION_H
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include <seastar/core/future.hh>
 #include <seastar/net/socket_defs.hh>
 #include <seastar/net/inet_address.hh>
@@ -14,19 +18,24 @@
 #include <map>
 #include <queue>
 
+enum class SessionType {
+    READER,
+    WRITER,
+    BROKER_READER,
+    BROKER_WRITER
+};
+
 class TcpSession : public seastar::enable_shared_from_this<TcpSession> {
 public:
     std::map<std::string, std::string> params;  // Session parameters
-    std::queue<std::string> message_queue;      // Queue to hold messages to be sent
+    std::string sessionId;
+    SessionType sessionType;
 
-    // Function to enqueue messages
-    void enqueue_message(const std::string &message) {
-        message_queue.push(message);
-    }
-
-    // Function to check if there are messages pending
-    bool has_pending_messages() const {
-        return !message_queue.empty();
+    // Constructor
+    TcpSession() {
+        // Generate a time-based UUID and convert it to a string
+        boost::uuids::uuid uuid = boost::uuids::basic_random_generator<boost::mt19937>()();
+        sessionId = boost::uuids::to_string(uuid);
     }
 };
 
